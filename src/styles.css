@@ -1,1 +1,40 @@
 /* You can add global styles to this file, and also import other style files */
+.valign-end-wrapper {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: flex-end;
+    -webkit-align-items: flex-end;
+        -ms-flex-align: flex-end;
+            align-items: flex-end;
+}
+
+.valign-start-wrapper {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: flex-start;
+    -webkit-align-items: flex-start;
+        -ms-flex-align: flex-start;
+            align-items: flex-start;
+}
+
+.inline-wrapper {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: flex-row;
+    -webkit-align-items: flex-row;
+        -ms-flex-align: flex-row;
+            align-items: flex-row;
+}
+
+.raphael-group-3-creditgroup,
+.raphael-group-8-creditgroup {
+  display: none;
+} {
+  display: none;
+}

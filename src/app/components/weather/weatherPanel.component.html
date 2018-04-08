@@ -1,0 +1,38 @@
+<div class="card">
+  <div class="card-content">
+      <h4 class="teal-text text-darken-3">Newmarket</h4>
+    <!-- <a class="btn-floating activator halfway-fab waves-effect waves-light red"><i class="material-icons">add</i></a> -->
+    <div class="row">
+      <div class="col l3 m12" style="padding: 0;">
+        <div class="card small valign-wrapper teal darken-4 grey-text text-lighten-2 z-depth-0">
+          <app-weather [when] = 0></app-weather>
+        </div>
+      </div>
+      <div class="col l3 m12" style="padding: 0;">
+        <div class="card small valign-wrapper teal grey-text text-darken-3 z-depth-0">
+          <app-weather [when] = 1></app-weather>
+        </div>
+      </div>
+      <div class="col l3 m12" style="padding: 0;">
+        <div class="card small valign-wrapper teal lighten-4 grey-text text-darken-4 z-depth-0">
+          <app-weather [when] = 2></app-weather>
+        </div>
+      </div>
+      <div class="col l3 m12" style="padding: 0;">
+        <div class="card small valign-wrapper grey-text z-depth-0">
+          <app-clock style="width: 100%;"></app-clock>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col s12 z-depth-1">
+        <app-cloud-solar-forecast></app-cloud-solar-forecast>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col s12 z-depth-1">
+        <app-wind-forecast></app-wind-forecast>
+      </div>
+    </div>
+  </div>
+</div>
