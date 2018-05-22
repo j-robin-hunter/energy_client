@@ -1,3 +1,4 @@
 export const environment = {
-  production: true
+  production: true,
+  graphqlURL: 'http://' + window.location.hostname + '/graphql'
 };

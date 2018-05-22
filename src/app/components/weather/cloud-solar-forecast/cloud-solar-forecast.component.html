@@ -1,6 +1,3 @@
 <div>
-  <fusioncharts
-    [chartConfig]="cloudSolarForecastConfig"
-    [dataSource]="cloudSolarForecastDataSource">
-  </fusioncharts>
+  <div style="height: 200px;" echarts [options]="options" [merge]="updateOptions" class="cloud_solar-chart"></div>
 </div>

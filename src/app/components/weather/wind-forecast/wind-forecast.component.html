@@ -1,6 +1,3 @@
 <div>
-  <fusioncharts
-    [chartConfig]="windForecastConfig"
-    [dataSource]="windForecastDataSource">
-  </fusioncharts>
+  <div style="height: 200px;" echarts [options]="options" [merge]="updateOptions" class="wind-chart"></div>
 </div>

@@ -1,5 +1,5 @@
 import { Component, OnInit} from '@angular/core';
-import { timer } from 'rxjs/observable/timer';
+import { timer } from 'rxjs';
 
 @Component({
   selector: 'app-clock',

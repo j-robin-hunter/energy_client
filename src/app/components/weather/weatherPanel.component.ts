@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { WeatherService,  ICoord, IWeather } from '../../services/weather.service';
-import { timer } from 'rxjs/observable/timer';
+import { timer } from 'rxjs';
 import * as SunCalc from 'suncalc';
 import * as Moment from 'moment';
 
