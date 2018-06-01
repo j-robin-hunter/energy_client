@@ -1,74 +1,115 @@
 import { Injectable } from '@angular/core';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
-import { Observable ,  Subject ,  timer } from 'rxjs';
-import "rxjs/add/observable/of"
+import { Observable, Subject, timer, of } from 'rxjs';
 
-const TICK = 10000;
+const TICK = 30000;
 const LatestMeasurements = gql`
 query LatestMeasurements {
 	pgrid:measurement(id: PGRID) {
-    value
+    value,
+		time,
+		id
   }
   pload:measurement(id: LOAD_POWER) {
-    value
+    value,
+		time,
+		id
   }
   ibattery:measurement(id: IBATTERY1) {
-    value
+    value,
+		time,
+		id
   }
   vbattery:measurement(id: VBATTERY1) {
-    value
+    value,
+		time,
+		id
   }
   total_load:measurement(id: E_TOTAL_LOAD) {
-    value
+    value,
+		time,
+		id
   }
   pmeter:measurement(id: PMETER) {
-    value
+    value,
+		time,
+		id
   }
   vpv:measurement(id: VPV1) {
-    value
+    value,
+		time,
+		id
   }
   ipv:measurement(id: IPV1) {
-    value
+    value,
+		time,
+		id
   }
   pvtotal:measurement(id:PVTOTAL) {
-    value
+    value,
+		time,
+		id
   }
 	soc:measurement(id: SOC1) {
-		value
+		value,
+		time,
+		id
 	}
 	washing_machines:measurement(id: WASHING_MACHINES) {
-		value
+		value,
+		time,
+		id
 	}
 	water_heater:measurement(id: WATER_HEATER) {
-		value
+		value,
+		time,
+		id
 	}
 	kitchen_island:measurement(id: KITCHEN_ISLAND) {
-		value
+		value,
+		time,
+		id
 	}
 	ovens:measurement(id: OVENS) {
-		value
+		value,
+		time,
+		id
 	}
-	upsairs_power:measurement(id: UPSTAIRS_POWER) {
-		value
+	upstairs_power:measurement(id: UPSTAIRS_POWER) {
+		value,
+		time,
+		id
 	}
 	kitchen_power:measurement(id: KITCHEN_POWER) {
-		value
+		value,
+		time,
+		id
 	}
 	over_garage_power:measurement(id: OVER_GARAGE_POWER) {
-		value
+		value,
+		time,
+		id
 	}
 	downstairs_power:measurement(id: DOWNSTAIRS_POWER) {
-		value
+		value,
+		time,
+		id
 	}
 	living_room_and_dmx:measurement(id: LIVING_ROOM_AND_DMX) {
-		value
+		value,
+		time,
+		id
 	}
 	lighting:measurement(id: LIGHTING) {
-		value
+		value,
+		time,
+		id
 	}
 	evolution:measurement(id: EVOLUTION) {
-		value
+		value,
+		time,
+		id
 	}
 }
 `;
@@ -80,15 +121,14 @@ export class MeasurementsService {
 
   constructor(private apollo: Apollo) {
     const subscribe = timer(0, TICK).subscribe(val => {
-      this.measurementSource.next(this.getLatestMeasurements());
+      this.getLatestMeasurements();
     });
   }
 
-  getLatestMeasurements(): Observable<any> {
+  getLatestMeasurements() {
     return this.apollo.query({query: LatestMeasurements, fetchPolicy: 'no-cache'})
     .pipe(response => {
-			console.log('A response', response);
       return response;
-    });
+    }).subscribe(measurements => this.measurementSource.next(measurements));
   }
 }

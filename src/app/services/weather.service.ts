@@ -32,7 +32,7 @@ export class WeatherService {
       .get(this.openweathermapURL + type + this.uriSuffix);
   }
 
-  weatherForecast(): Observable<IWeather[]> {
+  weatherForecast() {
     // Called on a timer tick this function builds the weather cache which is used to reduce the number of
     // calls that need to be madfe to an external weather service like Open Weather, each of whcih cost money.
     // The weather cache is made dirty after it's TTL time after which a call to get the Open Weather data
@@ -42,14 +42,12 @@ export class WeatherService {
     // next five days, again from Open Weather
     this.weatherAPICall('weather').subscribe((wResponse) => {
       if (this.lastWeather != wResponse.dt) {
-        this.lastWeather = wResponse.dt
+        this.lastWeather = wResponse.dt;
         this.weatherAPICall('forecast').pipe(
           map((fResponse) => {
             let forecast: Array<IWeather> = new Array<IWeather>();
-            forecast.push(this.mapResults(wResponse.name, wResponse))
-            fResponse.list.forEach(weather => {
-              forecast.push(this.mapResults(fResponse.city.name, weather));
-            }
+            forecast.push(this.mapResults(wResponse.name, wResponse));
+            fResponse.list.forEach(weather => forecast.push(this.mapResults(fResponse.city.name, weather)));
             return forecast;
           })
         ).subscribe(forecast => this.weatherSource.next(forecast));

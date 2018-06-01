@@ -15,20 +15,15 @@ export class WindForecastComponent implements OnInit {
 
   updateOptions: any;
   options = {
-    title: {
-        text: 'Wind Forecast',
-        left: 'center'
-    },
     grid: {
-        left: '3%',
-        right: '4%',
+        left: '0%',
+        right: '0%',
         bottom: '3%',
         containLabel: true
     },
     tooltip : {
       trigger: 'axis',
       axisPointer: {
-        type: 'cross',
         label: {
           backgroundColor: '#6a7985'
         }
@@ -44,9 +39,7 @@ export class WindForecastComponent implements OnInit {
     yAxis : [
         {
             type : 'value',
-            name: 'kph',
-            nameLocation: 'center',
-            nameGap: 25
+            name: 'kph'
         }
     ],
     series : [
@@ -67,21 +60,7 @@ export class WindForecastComponent implements OnInit {
                     }
                 },
                 symbol: 'circle',
-                symbolSize: 0,
-                data : [
-                    {
-                        xAxis: 5,
-                        label: {
-                            formatter: '18th March'
-                        },
-                    },
-                    {
-                        xAxis: 8,
-                        label: {
-                            formatter: '19th March'
-                        },
-                    }
-                ]
+                symbolSize: 0
             },
             showSymbol: false
         }
@@ -90,7 +69,7 @@ export class WindForecastComponent implements OnInit {
 
   constructor(private weatherService: WeatherService) {
     weatherService.weatherSource$.subscribe(weather => {
-      this.updateForecast(weather)
+      this.updateForecast(weather);
     });
   }
 
@@ -117,17 +96,5 @@ export class WindForecastComponent implements OnInit {
         }
       ]
     };
-  }
-
-  updateForecastOld(weather: Array<IWeather>) {
-    this.windForecastDataSource.data = [];
-    this.windForecastDataSource.chart.numbersuffix = weather[0].speed.unit;
-
-    weather.forEach(element => {
-        this.windForecastDataSource.data.push({"label":Moment(new Date(element.when * 1000)).format("HH:mm"), "value":element.speed.value});
-      if (element.when % 86400 == 0) {
-          this.windForecastDataSource.data.push({"vLine": "true", "label": Moment(new Date(element.when * 1000)).format("D MMM"), "showLabelBorder": "0", "labelHAlign": "left"});
-      }
-    });
   }
 }

@@ -17,20 +17,15 @@ export class CloudSolarForecastComponent implements OnInit {
 
   updateOptions: any;
   options = {
-    title: {
-        text: 'Cloud & Solar Forecast',
-        left: 'center'
-    },
     grid: {
-        left: '3%',
-        right: '4%',
+        left: '0%',
+        right: '0%',
         bottom: '3%',
         containLabel: true
     },
     tooltip : {
       trigger: 'axis',
       axisPointer: {
-        type: 'cross',
         label: {
           backgroundColor: '#6a7985'
         }
@@ -47,8 +42,6 @@ export class CloudSolarForecastComponent implements OnInit {
         {
             type : 'value',
             name: '%',
-            nameLocation: 'center',
-            nameGap: 25,
             max: 100
         }
     ],
