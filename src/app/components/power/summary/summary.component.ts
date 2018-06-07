@@ -1,5 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef} from '@angular/core';
 import { MeasurementsService } from '../../../services/measurements.service';
+import { ConfigService } from '../../../services/config.service';
+import { EventService } from '../../../services/event.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-summary',
@@ -7,6 +10,12 @@ import { MeasurementsService } from '../../../services/measurements.service';
   styleUrls: ['./summary.component.css']
 })
 export class SummaryComponent implements OnInit {
+  @ViewChild('echart') container: ElementRef;
+  transitionendSubscription: Subscription;
+  config: any;
+  testOne = 0;
+  lastValidLoad = 0;
+  maxPower = 5000;
   consumers =  [
     'downstairs_power',
     'upstairs_power',
@@ -20,8 +29,10 @@ export class SummaryComponent implements OnInit {
     'evolution',
     'lighting'
   ];
+  echartsIntance: any;
   updateOptions: any;
   options = {
+    color: ['#003366', '#006699', '#4cabce', '#000000'],
     grid: {
         left: '0%',
         right: '0%',
@@ -33,10 +44,10 @@ export class SummaryComponent implements OnInit {
       formatter: "{b}:<br/>{c}W ({d}%)"
     },
     legend: {
-      show: true,
+      show: false,
       orient: 'vertical',
       x: 'left',
-      left: '65%',
+      left: '70%',
       top: 'middle',
       data: []
     },
@@ -44,32 +55,56 @@ export class SummaryComponent implements OnInit {
       {
         name:'provider',
         type:'gauge',
-        radius: '50%',
-        max: 5000,
-        center: ['35%', '50%'],
+        radius: '80%',
+        max: this.maxPower,
+        center: ['50%', '50%'],
         pointer: {
-          width: 3
+          width: 3,
+          length: '90%'
+        },
+        itemStyle: {
+          normal: {
+              //shadowColor: 'rgba(0, 0, 0, 0.5)',
+              //shadowBlur: 10,
+              //shadowOffsetX: 2,
+              //shadowOffsetY: 2
+              color: '#004d40'
+          }
         },
         splitNumber: 1,
         axisLine: {
           lineStyle: {
-            width: 15,
-            color: [[1, '#f8f8f8']]
+            width: 20,
+            color: [[1, '#e0f2f1']]
           }
         },
         axisLabel: {
-          color: '#404040'
+          color: '#404040',
+          show: false
         },
-        itemStyle: {
-          color: '#404040'
+        axisTick: {
+          length: 15,
+          splitNumber: 2,
+          lineStyle: {
+            color: '#404040',
+            width: 1
+          }
+        },
+        splitLine: {
+          show: true,
+          length: 20,
+          lineStyle: {
+            color: [[1, '#404040']],
+            width: 1
+          }
         },
         detail: {
-          offsetCenter: ['0%', '-30%'],
+          offsetCenter: ['0%', '-40%'],
           color: '#404040',
           show: false,
-          formatter:'{value}W',
+          formatter:'Total Load\n{value}W',
           fontStyle: 'bold',
-          fontSize: 18
+          fontSize: 14
         },
         data:[0]
       },
@@ -77,8 +112,8 @@ export class SummaryComponent implements OnInit {
         name:'consumer',
         type:'pie',
         selectedMode: 'single',
-        radius: ['55%', '70%'],
-        center: ['35%', '50%'],
+        radius: ['85%', '100%'],
+        center: ['50%', '50%'],
         label: {
           normal: {
             show: false
@@ -86,60 +121,50 @@ export class SummaryComponent implements OnInit {
         },
         hoverOffset: 1,
         data:[]
-      },
-      {
-        name: 'excess',
-        type: 'gauge',
-        radius: '50%',
-        clockwise: false,
-        startAngle: -130,
-        endAngle: -50,
-        min: 3000,
-        max: 0,
-        center: ['35%', '50%'],
-        pointer: {
-          show: false
-        },
-        itemStyle: {
-          color: '#ffffff',
-          borderColor: '#404040'
-        },
-        detail: {
-          offsetCenter: ['0%', '65%'],
-          color: '#404040',
-          show: false,
-          formatter:'{value}W',
-          fontStyle: 'bold',
-          fontSize: 16
-        },
-        axisTick: {
-          show: false
-        },
-        axisLabel: {
-          show: false
-        },
-        splitLine: {
-          show: false
-        },
-        splitNumber: 1,
-        axisLine: {
-          lineStyle: {
-            width: 15,
-            color: [[1, '#f8f8f8']]
-          }
-        },
-        data: []
       }
     ]
   };
 
-	constructor(private measurementsService: MeasurementsService) {
+	constructor(private measurementsService: MeasurementsService, private configService: ConfigService, private eventService: EventService) {
     measurementsService.measurementSource$.subscribe(measurements => {
       this.refreshSummaryData(measurements);
     });
+    configService.getConfig().pipe().subscribe(config => {
+        this.maxPower = config['providers']['grid']['max_power'] || this.maxPower;
+        this.updateOptions = {
+          series: [
+            {
+              max: this.maxPower,
+              axisLabel: {
+                show: true
+              }
+            },
+            {
+            }
+          ]
+        };
+    });
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.transitionendSubscription = this.eventService.onTransitionend$.pipe().subscribe(() => {
+      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
+        this.echartsIntance.resize({
+          width: this.container.nativeElement.offsetWidth
+        });
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.transitionendSubscription) {
+       this.transitionendSubscription.unsubscribe();
+     }
+  }
+
+  onChartInit(chart) {
+    this.echartsIntance = chart;
+  }
 
 	refreshSummaryData(measurements) {
     let legend = [];
@@ -147,6 +172,12 @@ export class SummaryComponent implements OnInit {
       legend.push({'name': measurements.data[item].id, 'icon': 'circle'});
     });
     let provider = this.refreshProvider(measurements);
+    let load = measurements.data.pload.value;
+    // Sometime pload gives spurious reading, if it dows then use a previous value
+    if (load > 30000) {
+      load = this.lastValidLoad;
+    }
+
     this.updateOptions = {
       legend: {
         data: legend
@@ -155,94 +186,62 @@ export class SummaryComponent implements OnInit {
         {
           axisLine: {
             lineStyle: {
-              color: provider['provider']['components']
+              color: this.refreshProvider(measurements)
             }
           },
           detail: {
             show: true
           },
-          data: provider['provider']['total']
+          data: [load]
         },
         {
           data: this.refreshConsumer(measurements)
-        },
-        {
-          axisLine: {
-            lineStyle: {
-              color: provider['excess']['components']
-            }
-          },
-          detail: {
-            show: true
-          },
-          data: provider['excess']['total']
-        },
+        }
       ]
     };
   }
 
   refreshProvider(measurements) {
-    let providerData = [];
-		let grid = Math.round(measurements.data.pmeter.value);
-		let solar = Math.round(measurements.data.ipv.value * measurements.data.vpv.value);
-		let battery = Math.round(measurements.data.ibattery.value * measurements.data.vbattery.value);
-    let charge = 0;
-    let excess = 0;
+    let providerComponents = [[1, '#e0f2f1']];
+    let load = measurements.data.pload.value;
 
-    if (grid >= 0) {
-      excess = grid;
-      grid = 0;
-    } else {
-      grid = Math.abs(grid);
-    }
-
-    if (battery < 0 ) {
-      charge = Math.abs(battery);
-			battery = 0;
-		}
-
-    let providerTotal = grid + solar + battery;
-    let providerComponents = [
-      [grid/5000, '#ee0000'],
-      [(grid+solar)/5000, '#00ee00'],
-      [(grid+solar+battery)/5000, '#0000ee'],
-      [1, '#f8f8f8']];
-
-    let excessTotal = excess + charge;
-    let excessComponents = [
-      [excess/3000, '#ee0000'],
-      [(excess + charge)/3000, '#0000ee'],
-      [1, '#f8f8f8']];
-
-    return  {
-      'provider': {
-        'total': [{
-          'name': '',
-          'value': providerTotal,
-          'itemStyle': {
-            'opacity': 1
-          }
-        }],
-        'components': providerComponents
-      },
-      'excess': {
-        'total': [{
-          'name': '',
-          'value': excessTotal,
-          'itemStyle': {
-            'opacity': 0
-          }
-        }],
-        'components': excessComponents
+    // Sometimes pload gives spurious reading, if it dows then use a previous value
+    if (load > 0 ) {
+      if (load > 30000) {
+        load = this.lastValidLoad;
       }
-    };
+      this.lastValidLoad = load;
+      let loadPercentOfMax = load / this.maxPower;
+      if (loadPercentOfMax > 1) {
+        loadPercentOfMax = 1;
+      }
+      let grid = measurements.data.pmeter.value;
+      if (grid > 0) {
+        grid = 0;
+      }
+      grid = Math.abs(grid);
+  		let solar = measurements.data.ipv.value * measurements.data.vpv.value;
+  		let battery = measurements.data.ibattery.value * measurements.data.vbattery.value;
+      if (battery < 0) {
+        battery = 0;
+      }
+      let gridPercent = grid/(grid + solar + battery);
+      let solarPercent = solar/(grid + solar + battery);
+      let batteryPercent = battery/(grid + solar + battery);
+
+      providerComponents = [
+        [gridPercent * loadPercentOfMax, '#ee0000'],
+        [(gridPercent + solarPercent) * loadPercentOfMax, '#00ee00'],
+        [(gridPercent + solarPercent + batteryPercent) * loadPercentOfMax, '#0000ee'],
+        [1, '#e0f2f1']
+      ];
+    }
+    return  providerComponents;
 	}
 
   refreshConsumer(measurements) {
     let consumerData = [];
-    let monitored = 0;
     this.consumers.forEach((item) => {
-      monitored = monitored + measurements.data[item].value;
       consumerData.push({'name': measurements.data[item].id, 'value': measurements.data[item].value});
     });
 

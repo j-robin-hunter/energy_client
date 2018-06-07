@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { MeasurementsService } from '../../../services/measurements.service';
+import { EventService } from '../../../services/event.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-provider',
@@ -7,12 +9,16 @@ import { MeasurementsService } from '../../../services/measurements.service';
   styleUrls: ['./provider.component.css']
 })
 export class ProviderComponent implements OnInit {
+  @ViewChild('echart') container: ElementRef;
+  transitionendSubscription: Subscription;
+  chartWidth: number;
+  chartHeight: number;
   gridData = [];
   loadData = [];
   solarData = [];
   batteryData = [];
   chargeData = [];
-
+  echartsIntance: any;
   updateOptions: any;
   options = {
       tooltip: {
@@ -55,7 +61,7 @@ export class ProviderComponent implements OnInit {
         {
           type: 'value',
           name: '%',
-          boundaryGap: [0, '15%'],
+          boundaryGap: ['-10%', '10%'],
           splitLine: {
               show: false
           },
@@ -133,17 +139,35 @@ export class ProviderComponent implements OnInit {
       ]
   };
 
-  constructor(private measurementsService: MeasurementsService) {
+  constructor(private measurementsService: MeasurementsService, private eventService: EventService) {
     measurementsService.measurementSource$.subscribe(measurements => {
       this.refreshProviderData(measurements);
     });
 
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.transitionendSubscription = this.eventService.onTransitionend$.pipe().subscribe(() => {
+      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
+        this.echartsIntance.resize({
+          width: this.container.nativeElement.offsetWidth
+        });
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.transitionendSubscription) {
+       this.transitionendSubscription.unsubscribe();
+     }
+  }
+
+  onChartInit(chart) {
+    this.echartsIntance = chart;
+  }
 
   refreshProviderData(measurements) {
-    // Sometimes generates a spurious value. If it dows ignore all readings
+    // Sometimes generates a spurious value. If it does then ignore all readings
     if (measurements.data.pload.value < 30000) {
       let time = new Date(measurements.data.pgrid.time);
       let value = [time.getFullYear(), time.getMonth() + 1, time.getDate()].join('/') + ' ' + time.toTimeString().split(' ')[0];

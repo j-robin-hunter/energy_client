@@ -1,25 +1,19 @@
 import { Injectable } from '@angular/core';
-import { Apollo } from 'apollo-angular';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class ConfigService {
-  apollo: Apollo;
+  googleReverseKey = 'AIzaSyBrED62CyrSGV5fyFXSkEnxZDO5X9kAwVU';
 
-  constructor(apollo: Apollo) {
-    this.apollo = apollo;
+  constructor(private http: HttpClient) {
   }
 
-  load(): Promise<any> {
-    return new Promise((resolve, reject) => {
-      console.log(`inside promise`);
+  getConfig(): Observable<any> {
+    return this.http.get('http://localhost:4040/config');
+  }
 
-      setTimeout(() => {
-        console.log(`inside setTimeout`);
-        // doing something
-        // ...
-
-        resolve();
-      }, 50);
-    });
+  getReverseGeolocation(latitude, longitude): Observable<any> {
+    return this.http.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&result_type=postal_town&key=${this.googleReverseKey}`);
   }
 }

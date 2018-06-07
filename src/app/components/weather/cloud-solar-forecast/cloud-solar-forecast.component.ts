@@ -19,7 +19,7 @@ export class CloudSolarForecastComponent implements OnInit {
   options = {
     grid: {
         left: '0%',
-        right: '0%',
+        right: '2%',
         bottom: '3%',
         containLabel: true
     },

@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { IMyDpOptions, IMyDateModel } from 'mydatepicker';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { MeasurementsService } from '../../../services/measurements.service';
-
+import { EventService } from '../../../services/event.service';
+import { Subscription } from 'rxjs';
+import * as chroma from 'chroma-js';
 
 @Component({
   selector: 'app-consumer',
@@ -9,6 +10,8 @@ import { MeasurementsService } from '../../../services/measurements.service';
   styleUrls: ['./consumer.component.css']
 })
 export class ConsumerComponent implements OnInit {
+  @ViewChild('echart') container: ElementRef;
+  transitionendSubscription: Subscription;
   consumers =  [
     'downstairs_power',
     'upstairs_power',
@@ -22,50 +25,74 @@ export class ConsumerComponent implements OnInit {
     'evolution',
     'lighting'
   ];
+  echartsIntance: any;
   series = [];
   updateOptions: any;
   options = {
-      tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-              animation: false
-          }
-      },
-      grid: {
-        left: '0%',
-        right: '3%',
-        bottom: '3%',
-        containLabel: true
-      },
-      dataZoom: [
-        {
-            show: true,
-            realtime: true
-        }
-      ],
-      xAxis: {
-          type: 'time',
-          splitLine: {
-              show: false
-          }
-      },
-      yAxis: {
-          type: 'value',
-          name: 'watts',
-          boundaryGap: [0, '15%'],
-          splitLine: {
-              show: true
-          }
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        animation: false
       }
+    },
+    grid: {
+      left: '0%',
+      right: '3%',
+      bottom: '3%',
+      containLabel: true
+    },
+    dataZoom: [
+      {
+        show: true,
+        realtime: true
+      }
+    ],
+    xAxis: {
+      type: 'time',
+      splitLine: {
+        show: false
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: 'watts',
+      boundaryGap: [0, '10%'],
+      splitLine: {
+        show: true
+      }
+    }
   };
 
-  constructor(private measurementsService: MeasurementsService) {
+  constructor(private measurementsService: MeasurementsService, private eventService: EventService) {
     measurementsService.measurementSource$.subscribe(measurements => {
       this.refreshConsumerData(measurements);
     });
+    let colors = chroma.scale(['orange','purple']).mode('hcl').colors(this.consumers.length);
+    this.updateOptions = {
+      color: colors
+    }
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.transitionendSubscription = this.eventService.onTransitionend$.pipe().subscribe(() => {
+      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
+        this.echartsIntance.resize({
+          width: this.container.nativeElement.offsetWidth
+        });
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.transitionendSubscription) {
+       this.transitionendSubscription.unsubscribe();
+     }
+  }
+
+  onChartInit(chart) {
+    this.echartsIntance = chart;
+    this.echartsIntance.resize({width: 'auto', height: 'auto'});
+  }
 
   refreshConsumerData(measurements) {
     let legend = [];
@@ -105,6 +132,5 @@ export class ConsumerComponent implements OnInit {
       },
       series: this.series
     };
-    console.log(this.updateOptions);
   }
 }

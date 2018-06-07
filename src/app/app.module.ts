@@ -17,6 +17,7 @@ import { NgxEchartsModule } from 'ngx-echarts';
 import { WeatherService } from './services/weather.service';
 import { MeasurementsService } from './services/measurements.service';
 import { ConfigService } from './services/config.service';
+import { EventService } from './services/event.service';
 
 import { WeatherPanelComponent } from './components/weather/weatherPanel.component';
 import { ClockComponent } from './components/clock/clock.component';
@@ -26,10 +27,13 @@ import { WindForecastComponent } from './components/weather/wind-forecast/wind-f
 import { SummaryComponent } from './components/power/summary/summary.component';
 import { ProviderComponent } from './components/power/provider/provider.component';
 import { ConsumerComponent } from './components/power/consumer/consumer.component';
+import { SelfuseComponent } from './components/power/selfuse/selfuse.component';
+import { CityComponent } from './components/city/city.component';
+import { WhatusesComponent } from './components/power/whatuses/whatuses.component';
 
 export function configServiceFactory(configService: ConfigService):
   Function {
-    return () => configService.load();
+    return () => configService.getConfig();
   }
 
 @NgModule({
@@ -42,7 +46,10 @@ export function configServiceFactory(configService: ConfigService):
     WindForecastComponent,
     SummaryComponent,
     ProviderComponent,
-    ConsumerComponent
+    ConsumerComponent,
+    SelfuseComponent,
+    CityComponent,
+    WhatusesComponent
   ],
   imports: [
     BrowserModule,
@@ -61,7 +68,8 @@ export function configServiceFactory(configService: ConfigService):
       useFactory: configServiceFactory,
       deps: [ConfigService],
       multi: true
-    }
+    },
+    EventService
   ],
   bootstrap: [AppComponent]
 })

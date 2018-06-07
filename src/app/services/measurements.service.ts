@@ -16,6 +16,11 @@ query LatestMeasurements {
 		time,
 		id
   }
+	vload:measurement(id: VLOAD) {
+    value,
+		time,
+		id
+  }
   ibattery:measurement(id: IBATTERY1) {
     value,
 		time,
@@ -52,6 +57,11 @@ query LatestMeasurements {
 		id
   }
 	soc:measurement(id: SOC1) {
+		value,
+		time,
+		id
+	}
+	soh:measurement(id: SOH1) {
 		value,
 		time,
 		id

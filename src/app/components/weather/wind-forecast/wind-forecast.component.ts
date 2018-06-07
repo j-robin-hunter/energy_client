@@ -17,7 +17,7 @@ export class WindForecastComponent implements OnInit {
   options = {
     grid: {
         left: '0%',
-        right: '0%',
+        right: '1%',
         bottom: '3%',
         containLabel: true
     },
@@ -60,7 +60,8 @@ export class WindForecastComponent implements OnInit {
                     }
                 },
                 symbol: 'circle',
-                symbolSize: 0
+                symbolSize: 0,
+                data : []
             },
             showSymbol: false
         }

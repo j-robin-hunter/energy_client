@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject, timer, of } from 'rxjs';
 import { map, switchMap, catchError } from 'rxjs/operators';
+import { ConfigService } from '../services/config.service';
 
 const CACHE_TTL = 600000;
 
@@ -17,13 +18,15 @@ export class WeatherService {
   tempUnitMetric: boolean = true;
   speedUnitMetric: boolean = true;
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private configService: ConfigService) {
     let appid: string = '24615ee29fd6a8cc987377ef5669f8da';
     this.openweathermapURL = 'http://api.openweathermap.org/data/2.5/';
-    this.coord = {lat:52.2015252, lon: 0.3986641};
-    this.uriSuffix = '?lat=' + this.coord.lat + '&lon=' + this.coord.lon + '&appid=' + appid + '&units=metric';
-    const subscribe = timer(0, CACHE_TTL).subscribe(val => {
-      this.weatherForecast();
+    configService.getConfig().pipe().subscribe(config => {
+      this.coord = {'lat': config['latitude'], 'lon': config['longitude']}
+      this.uriSuffix = '?lat=' + this.coord.lat + '&lon=' + this.coord.lon + '&appid=' + appid + '&units=metric';
+      const subscribe = timer(0, CACHE_TTL).subscribe(val => {
+        this.weatherForecast();
+      });
     });
   }
 
