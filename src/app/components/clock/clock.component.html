@@ -1,5 +1,7 @@
-<div class="app-clock">
-  <h1 style="display: inline;">{{ clock | date:'hh:mm' }}</h1>
-  <h3 style="display: inline;">{{ clock | date:'aa' }}</h3>
-  <h2>{{ clock | date:'E d LLL' }}</h2>
+<div class="clockbox">
+  <div class="timebox">
+    <div class="time mat-title">{{ clock | date:'hh:mm' }}</div>
+    <div class="ampm mat-subheading-2">{{ clock | date:'aa' }}</div>
+  </div>
+  <div class="date mat-subheading-1">{{ clock | date:'E d LLL' }}</div>
 </div>

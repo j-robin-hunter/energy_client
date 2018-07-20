@@ -1,0 +1,12 @@
+// define 3 theme color
+// mat-palette accepts $palette-name, main, lighter and darker variants
+$energy-theme-primary: mat-palette($mat-teal);
+$energy-theme-accent: mat-palette($mat-grey);
+$energy-theme-warn: mat-palette($mat-orange);
+
+// create theme (use mat-dark-theme for themes with dark backgrounds)
+$energy-theme: mat-light-theme(
+    $energy-theme-primary,
+    $energy-theme-accent,
+    $energy-theme-warn
+);

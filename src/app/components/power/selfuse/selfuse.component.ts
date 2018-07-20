@@ -1,8 +1,9 @@
 import { Component, OnInit, Input, ViewChild, ElementRef } from '@angular/core';
-import { MeasurementsService } from '../../../services/measurements.service';
+import { MeterReadingService } from '../../../services/meter-reading.service';
 import { ConfigService } from '../../../services/config.service';
 import { EventService } from '../../../services/event.service';
 import { Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
   selector: 'app-selfuse',
@@ -11,13 +12,23 @@ import { Subscription } from 'rxjs';
 })
 export class SelfuseComponent implements OnInit {
   @ViewChild('echart') container: ElementRef;
-  transitionendSubscription: Subscription;
-  batteryIndex: number = 0;
-  maxBatteryCharge: number = 50;
-  batteryEnabled: boolean = false;
-  echartsIntance: any;
-  updateOptions: any;
-  options = {
+
+  private transitionendSubscription: Subscription;
+  private configKeys = {
+    'grid': ['total_power'],
+    'solar': ['total_power'],
+    'battery': ['total_power', 'state_of_charge']
+  };
+  private maxBatteryChargePower: number = 1000;
+  private maxBatteryDischargePower: number = 1000;
+  private batteryCapacity: number = 0;
+  private batteryEnabled: boolean = false;
+  private batteryAvailableAt: number = 25;
+  private batteryMaxDischarge: number = 90;
+  private echartsInstance: any;
+
+  public updateOptions: any;
+  public options = {
     grid: {
         left: '0%',
         right: '0%',
@@ -188,7 +199,7 @@ export class SelfuseComponent implements OnInit {
         detail: {
           offsetCenter: ['25%', '35%'],
           show: true,
-          formatter:'{a|Charge\n{value}A}',
+          formatter:'{a|Charge\n{value}W}',
           rich: {
             a: {
               align: 'right',
@@ -277,20 +288,26 @@ export class SelfuseComponent implements OnInit {
     ]
   };
 
-  constructor(private measurementsService: MeasurementsService, private configService: ConfigService, private eventService: EventService) {
-    measurementsService.measurementSource$.subscribe(measurements => {
-      this.refreshSelfUseData(measurements);
-    });
-    configService.getConfig().pipe().subscribe(config => {
-      let maxChargeCurrent = config['providers']['battery'][this.batteryIndex]['max_charge_current'] || this.maxBatteryCharge;
-      this.maxBatteryCharge = Math.max(maxChargeCurrent, config['providers']['battery'][this.batteryIndex]['max_discharge_current']) || this.maxBatteryCharge;
+  constructor(private meterReadingService: MeterReadingService, private configService: ConfigService, private eventService: EventService) {
+    let batteryDetails = configService.getConfigurationItemValues('battery', 'detail');
+    this.maxBatteryChargePower =
+      (batteryDetails[0]['max_charge_current'] * batteryDetails[0]['voltage']) || this.maxBatteryChargePower;
+    this.maxBatteryDischargePower =
+      (batteryDetails[0]['max_discharge_current'] * batteryDetails[0]['voltage']) || this.maxBatteryDischargePower;
+    this.batteryCapacity = batteryDetails[0]['capacity'] || this.batteryCapacity;
+    this.batteryAvailableAt = parseFloat(batteryDetails[0]['available_at']) || this.batteryAvailableAt;
+    this.batteryMaxDischarge = parseFloat(batteryDetails[0]['max_discharge']) || this.batteryMaxDischarge;
+
+    let lookup = configService.getLookup(this.configKeys);
+    meterReadingService.meterReadingSource$.subscribe(meterReadings => {
+      this.refreshData(meterReadings, lookup);
     });
   }
 
   ngOnInit() {
     this.transitionendSubscription = this.eventService.onTransitionend$.pipe().subscribe(() => {
       if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
-        this.echartsIntance.resize({
+        this.echartsInstance.resize({
           width: this.container.nativeElement.offsetWidth
         });
       }
@@ -304,22 +321,48 @@ export class SelfuseComponent implements OnInit {
   }
 
   onChartInit(chart) {
-    this.echartsIntance = chart;
+    this.echartsInstance = chart;
   }
 
-  @Input()
-  set batteryNumber(batteryIndex: number) {
-    this.batteryIndex = batteryIndex;
-  }
+  refreshData(meterReadings, lookup) {
+    let load = 0;
+    let soc = 0;
+    let charge = 0;
+    let solar = 0;
+    let grid = 0;
+    let ids = Object.keys(lookup);
+    meterReadings.forEach(readings => {
+      let reading = readings[readings.length - 1];
+      if (ids.includes(reading.id)) {
+        if (lookup[reading.id].source == reading.source) {
+          switch (lookup[reading.id].key) {
+            case 'total_load':
+              load += Math.round(reading.value);
+              break;
+            case 'state_of_charge':
+              soc += Math.round(reading.value);
+              break;
+            case 'total_power':
+              if (lookup[reading.id].type == 'grid') {
+                grid += Math.round(reading.value);
+              } if (lookup[reading.id].type == 'solar') {
+                solar += Math.round(reading.value);
+              } if (lookup[reading.id].type == 'battery') {
+                charge += Math.round(reading.value);
+              }
+              break;
+          }
+        }
+      }
+    });
 
-  refreshSelfUseData(measurements) {
-    let hours = this.batteryHours(measurements) + this.solarHours(measurements);
+    let hours = this.batteryHours(soc, load) + this.solarHours();
     let maxHours = 12;
     while (hours > maxHours) {
       maxHours = maxHours * 2;
     }
 
-    let batteryCharge = -1 * measurements.data.ibattery.value / this.maxBatteryCharge;
+    let batteryCharge = -1 * (charge / Math.max(this.maxBatteryChargePower, this.maxBatteryDischargePower));
 
     let batteryColor = '#0000e0';
     if (batteryCharge > 0) {
@@ -330,7 +373,7 @@ export class SelfuseComponent implements OnInit {
       batteryCharge = 1
     }
 
-    let excess = measurements.data.pgrid.value;
+    let excess = grid;
     if (excess < 0) {
       excess = 0;
     } else {
@@ -349,10 +392,10 @@ export class SelfuseComponent implements OnInit {
         {
           axisLine: {
             lineStyle: {
-              color: [[measurements.data.soc.value / 100, '#00ee00'],[1,'#e0f2f1']]
+              color: [[soc / 100, '#00ee00'],[1,'#e0f2f1']]
             }
           },
-          data: [measurements.data.soc.value]
+          data: [soc]
         },
         {
           axisLine: {
@@ -360,7 +403,7 @@ export class SelfuseComponent implements OnInit {
               color: [[batteryCharge, batteryColor],[1,'#e0f2f1']]
             }
           },
-          data: [-1 * measurements.data.ibattery.value]
+          data: [-1 * charge]
         },
         {
           axisLine: {
@@ -374,26 +417,25 @@ export class SelfuseComponent implements OnInit {
     };
   }
 
-  batteryHours(measurements) {
+  batteryHours(soc, load) {
     let hours = 0;
 
     // Battery will only discharge if it has reached 25% charge. Once it is enabled it will discharge
     // until it reaches 10% at which point it will not discharge again until it has reached 25%
-    let soc = measurements.data.soc.value;
-    if (soc >= 25) {
+    if (soc >= this.batteryAvailableAt) {
       this.batteryEnabled = true;
     }
-    if (soc <= 10) {
+    if (soc <= 100 - this.batteryMaxDischarge) {
       this.batteryEnabled = false
     }
     if (this.batteryEnabled) {
-      let charge = 126 * (measurements.data.soh.value/100) * 0.9 * (soc/100);
-      hours = Math.round(charge/(measurements.data.pload.value/measurements.data.vload.value));
+      let charge = this.batteryCapacity * 0.9 * (soc/100);
+      hours = Math.round(charge/(load/240));
     }
     return hours;
   }
 
-  solarHours(measurements) {
+  solarHours() {
     return 0;
   }
 }

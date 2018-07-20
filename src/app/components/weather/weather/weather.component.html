@@ -1,12 +1,12 @@
 
-<div class="valign-wrapper">
-  <div *ngIf="weatherData">
+<div class="weatherbox">
+  <div class="weathersymbol" *ngIf="weatherData">
     <img style="width: 100px; height: 100px;" src="./assets/images/weather/{{ weatherData?.icon }}.png"/>
   </div>
-  <div>
-    <p class="text large remove-margin">{{ weatherData?.temp.value }}&nbsp;{{ weatherData?.temp.unit }}</p>
-    <p class="text remove-margin">{{ weatherData?.description }}</p>
-    <p class="text large remove-margin">{{ weatherData?.speed.value }}&nbsp;{{ weatherData?.speed.unit }}</p>
-    <p class="text remove-margin">{{ weatherData?.direction }}</p>
+  <div class="weatherdetailbox">
+    <div class="weatherdetail">{{ weatherData?.temp.value }}&nbsp;{{ weatherData?.temp.unit }}</div>
+    <div class="weatherdetail">{{ weatherData?.description }}</div>
+    <div class="weatherdetail">{{ weatherData?.speed.value }}&nbsp;{{ weatherData?.speed.unit }}</div>
+    <div class="weatherdetail">{{ weatherData?.direction }}</div>
   </div>
 </div>

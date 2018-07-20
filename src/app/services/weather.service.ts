@@ -9,24 +9,29 @@ const CACHE_TTL = 600000;
 
 @Injectable()
 export class WeatherService {
-  coord: ICoord;
-  openweathermapURL: string;
-  uriSuffix: string;
-  weatherSource: Subject<IWeather[]> = new Subject<IWeather[]>();
-  weatherSource$ = this.weatherSource.asObservable();
-  lastWeather: number = 0;
-  tempUnitMetric: boolean = true;
-  speedUnitMetric: boolean = true;
+  private openweathermapURL: string = 'http://api.openweathermap.org/data/2.5/';
+  private appid: string = '24615ee29fd6a8cc987377ef5669f8da';
+  private coord: ICoord;
+  private uriSuffix: string;
+  private lastWeather: number = 0;
+  private tempUnitMetric: boolean = true;
+  private speedUnitMetric: boolean = true;
+
+  private weather: Subject<IWeather[]> = new Subject<IWeather[]>();
+
+  get onWeather$(): Observable<IWeather[]> {
+    return this.weather.asObservable();
+  }
 
   constructor(private http: HttpClient, private configService: ConfigService) {
-    let appid: string = '24615ee29fd6a8cc987377ef5669f8da';
-    this.openweathermapURL = 'http://api.openweathermap.org/data/2.5/';
-    configService.getConfig().pipe().subscribe(config => {
-      this.coord = {'lat': config['latitude'], 'lon': config['longitude']}
-      this.uriSuffix = '?lat=' + this.coord.lat + '&lon=' + this.coord.lon + '&appid=' + appid + '&units=metric';
-      const subscribe = timer(0, CACHE_TTL).subscribe(val => {
-        this.weatherForecast();
-      });
+    this.coord = {
+      'lat': configService.getConfigurationValue('latitude'),
+      'lon': configService.getConfigurationValue('longitude')
+    };
+
+    this.uriSuffix = '?lat=' + this.coord.lat + '&lon=' + this.coord.lon + '&appid=' + this.appid + '&units=metric';
+    const subscribe = timer(0, CACHE_TTL).subscribe(val => {
+      this.weatherForecast();
     });
   }
 
@@ -53,12 +58,12 @@ export class WeatherService {
             fResponse.list.forEach(weather => forecast.push(this.mapResults(fResponse.city.name, weather)));
             return forecast;
           })
-        ).subscribe(forecast => this.weatherSource.next(forecast));
+        ).subscribe(forecast => this.weather.next(forecast));
       }
     });
   }
 
-  mapResults(where: string, result): IWeather {
+  mapResults(where: string, result: any): IWeather {
     // This function converst the data from Open Weather API calls to an internal less dense format that
     // remove many unwanted fields.
     const iconMap = {

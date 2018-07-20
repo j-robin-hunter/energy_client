@@ -5,37 +5,33 @@ import { Subscription }   from 'rxjs';
 @Component({
   selector: 'app-weather',
   templateUrl: './weather.component.html',
-  styleUrls: ['./weather.component.css']
+  styleUrls: ['./weather.component.scss']
 })
 export class WeatherComponent implements OnInit {
-  weatherData: IWeather;
-  /**
-    icon: '0999'
-    temp: IVlaue = {value: 0, unit: ''},
-    description: 'Unknown at this time',
-    speed: IValue = {value: 0, unit: ''},
-    direction: '';
-  **/
-  subscription: Subscription;
-  whenIndex: number = 0;
+
+  private onWeatherSubscription: Subscription;
+  public weatherData: IWeather;
+  public whenIndex: number = 0;
 
   constructor(private weatherService: WeatherService) {
-    this.subscription = weatherService.weatherSource$.subscribe(weather => {
+  }
+
+  ngOnInit() {
+    this.onWeatherSubscription = this.weatherService.onWeather$.subscribe(weather => {
       if (this.whenIndex >= 0 && this.whenIndex < weather.length) {
         this.weatherData = weather[this.whenIndex];
       }
     });
   }
 
-  ngOnInit() {}
-
   ngOnDestroy() {
-    // prevent memory leak when component destroyed
-    this.subscription.unsubscribe();
+    if (this.onWeatherSubscription) {
+       this.onWeatherSubscription.unsubscribe();
+     }
   }
 
-    @Input()
-    set when(whenIndex: number) {
-      this.whenIndex = whenIndex;
-    }
+  @Input()
+  set when(whenIndex: number) {
+    this.whenIndex = whenIndex;
+  }
 }

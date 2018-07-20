@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { WeatherService, IWeather } from '../../../services/weather.service';
+import { EventService } from '../../../services/event.service';
 import { Subscription }   from 'rxjs';
 import * as SunCalc from 'suncalc';
 import * as Moment from 'moment';
@@ -10,13 +11,29 @@ import * as Moment from 'moment';
   styleUrls: ['./cloud-solar-forecast.component.css']
 })
 export class CloudSolarForecastComponent implements OnInit {
-  cloudData: any[];
-  solarData: any[];
-  dates: any;
-  markDates: any;
+  @ViewChild('cloudandsolar') container: ElementRef;
 
-  updateOptions: any;
-  options = {
+  private transitionendSubscription: Subscription;
+  private resizeSubscription: Subscription;
+  private pageshowSubscription: Subscription;
+  private onWeatherSubscription: Subscription;
+  private cloudData: any[];
+  private solarData: any[];
+  private dates: any;
+  private markDates: any;
+  private echartsInstance: any;
+
+  public updateOptions: any;
+  public options = {
+      title: {
+        text: 'Cloud & Solar Forecast',
+        left: 'center',
+        textStyle: {
+          fontSize: 14,
+          color: '#202020',
+          fontWeight: 'normal'
+        }
+      },
     grid: {
         left: '0%',
         right: '2%',
@@ -89,13 +106,63 @@ export class CloudSolarForecastComponent implements OnInit {
     ]
   };
 
-  constructor(private weatherService: WeatherService) {
-    weatherService.weatherSource$.subscribe(weather => {
-      this.updateForecast(weather)
-    });
+  constructor(private weatherService: WeatherService, private eventService: EventService) {
   }
 
   ngOnInit() {
+    this.transitionendSubscription = this.eventService.onTransitionend$.pipe().subscribe(() => {
+      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0 &&
+          this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
+        this.echartsInstance.resize({
+          width: this.container.nativeElement.offsetWidth,
+          height: this.container.nativeElement.offsetHeight
+        });
+      }
+    });
+    this.pageshowSubscription = this.eventService.onPageshow$.pipe().subscribe(() => {
+      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0 &&
+          this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
+        this.echartsInstance.resize({
+          width: this.container.nativeElement.offsetWidth,
+          height: this.container.nativeElement.offsetHeight
+        });
+      }
+    });
+    this.resizeSubscription = this.eventService.onResize$.pipe().subscribe(() => {
+      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0 &&
+          this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
+        this.echartsInstance.resize({
+          width: this.container.nativeElement.offsetWidth,
+          height: this.container.nativeElement.offsetHeight
+        });
+      }
+    });
+    this.onWeatherSubscription = this.weatherService.onWeather$.subscribe(weather => {
+      this.updateForecast(weather);
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.transitionendSubscription) {
+       this.transitionendSubscription.unsubscribe();
+     }
+    if (this.pageshowSubscription) {
+       this.pageshowSubscription.unsubscribe();
+     }
+    if (this.resizeSubscription) {
+       this.resizeSubscription.unsubscribe();
+     }
+    if (this.onWeatherSubscription) {
+       this.onWeatherSubscription.unsubscribe();
+     }
+  }
+
+  onChartInit(chart) {
+    this.echartsInstance = chart;
+    this.echartsInstance.resize({
+      width: this.container.nativeElement.offsetWidth,
+      height: this.container.nativeElement.offsetHeight
+    });
   }
 
   updateForecast(weather: Array<IWeather>) {

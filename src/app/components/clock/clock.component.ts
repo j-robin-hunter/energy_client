@@ -4,10 +4,10 @@ import { timer } from 'rxjs';
 @Component({
   selector: 'app-clock',
   templateUrl: './clock.component.html',
-  styleUrls: ['./clock.component.css']
+  styleUrls: ['./clock.component.scss']
 })
 export class ClockComponent implements OnInit {
-  source = timer(1000, 2000);
+  source = timer(0, 1000);
   clock: Date;
 
   constructor() { }

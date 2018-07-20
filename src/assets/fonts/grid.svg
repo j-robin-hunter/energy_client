@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   class="icon"
+   height="512"
+   viewBox="0 0 1024 1024"
+   version="1.1"
+   id="svg2995"
+   inkscape:version="0.48.3.1 r9886"
+   width="100%"
+   sodipodi:docname="pole.svg">
+  <metadata
+     id="metadata3003">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs3001" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1513"
+     inkscape:window-height="989"
+     id="namedview2999"
+     showgrid="false"
+     inkscape:zoom="0.78144433"
+     inkscape:cx="513"
+     inkscape:cy="257.22"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg2995" />
+  <path
+     d="M852.464 239.264h-284.64l-2.384-79.776h207.424v20.912h47.792V159.488h25.472V131.616H564.576l-3.088-104.496h-88.544l-3.84 104.496H181.84v27.872h27.904v20.912h47.776V159.488h210.56l-2.896 79.776H175.536v27.872h27.856v19.856h47.792v-19.856h213.008l-3.024 82.608H234.752v27.888h26.624v20.176h47.792v-20.176h150.96L437.696 992h152.56l-18.32-614.368h145.264v20.176h47.792v-20.176h28.256v-27.888H571.12l-2.48-82.608h208.192v19.856h47.728v-19.856h27.904v-27.872z"
+     id="path2997" />
+</svg>

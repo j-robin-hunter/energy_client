@@ -1,79 +1,41 @@
-<!--The content below is only a placeholder and can be replaced.-->
-<div class="row teal valign-wrapper z-depth-2">
-  <div class="col l3 hide-on-med-and-down ">
-      <h1 class="teal-text text-lighten-4"><app-city></app-city></h1>
-  </div>
-  <div class="col s12 m6 l2 teal grey-text text-lighten-2">
-    <app-weather [when] = 0></app-weather>
-  </div>
-  <div class="col s12 m6 l2 teal grey-text text-lighten-1">
-    <app-weather [when] = 1></app-weather>
-  </div>
-  <div class="col s12 m6 l2 teal grey-text">
-    <app-weather [when] = 2></app-weather>
-  </div>
-  <div class="col l3 hide-on-med-and-down teal-text text-lighten-4 right-align app-clock">
-    <app-clock style="width: 200px;"></app-clock>
-  </div>
-</div>
+<!--
+<app-toast></app-toast>
+-->
 
-<div class="row" style="margin-bottom: 0px">
-  <div class="col s12">
-    <div class="card-small z-depth-1">
-      <div class="row">
-        <div class="col s12 m6 z-depth-0">
-          <app-cloud-solar-forecast></app-cloud-solar-forecast>
-        </div>
-        <div class="col s12 m6 z-depth-0">
-          <app-wind-forecast></app-wind-forecast>
-        </div>
+<div class="container">
+  <div class="col12">
+    <app-summary-layout></app-summary-layout>
+  </div>
+
+  <div class="card col8 row1">
+    <div class="forecast">
+      <div>
+        <app-cloud-solar-forecast></app-cloud-solar-forecast>
+      </div>
+      <div>
+        <app-wind-forecast></app-wind-forecast>
       </div>
     </div>
   </div>
-</div>
 
-<div class="row">
-  <div class="col s6">
-    <div class="card z-depth-1">
-        <a class="btn-floating activator halfway-fab waves-effect waves-light red"><i class="material-icons">add</i></a>
-        <div class="card-content">
-          <div class="row valign-wrapper">
-            <div class="col s12">
-              <app-whatuses></app-whatuses>
-            </div>
-          </div>
-        </div>
-        <div class="card-reveal">
-          <span class="card-title"><i class="material-icons right">close</i></span>
-          <div class="row valign-wrapper">
-            <div class="col s12">
-              <app-consumer></app-consumer>
-            </div>
-          </div>
-        </div>
-    </div>
+  <div class="card col4 row1">
+    <app-whatuses></app-whatuses>
   </div>
-  <div class="col s6">
-    <div class="card z-depth-1">
-        <a class="btn-floating activator halfway-fab waves-effect waves-light red"><i class="material-icons">add</i></a>
-        <div class="card-content">
-          <div class="row valign-wrapper">
-            <div class="col s6">
-              <app-summary></app-summary>
-            </div>
-            <div class="col s6">
-              <app-selfuse></app-selfuse>
-            </div>
-          </div>
-        </div>
-        <div class="card-reveal">
-          <span class="card-title"><i class="material-icons right">close</i></span>
-          <div class="row valign-wrapper">
-            <div class="col s12">
-              <app-provider></app-provider>
-            </div>
-          </div>
-        </div>
-    </div>
+  
+  <div class="card col4 row2">
+    <app-summary></app-summary>
   </div>
+
+  <div class="card col4 row2">
+      <app-cost></app-cost>
+  </div>
+
+  <div class="card col4 row1">
+    <app-provider></app-provider>
+  </div>
+
+  <div class="card col4 row1">
+    <app-consumer></app-consumer>
+  </div>
+
 </div>

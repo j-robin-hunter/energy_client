@@ -1,10 +1,8 @@
-<div #echart>
+<div #echart style="height: 100%;">
   <div
-    style="height: 270px;"
-    class="app-selfuse"
     echarts [options]="options"
     [merge]="updateOptions"
     (chartInit)="onChartInit($event)"
-    class="selfuse-chart">
+    class="whatuses-chart">
   </div>
 </div>

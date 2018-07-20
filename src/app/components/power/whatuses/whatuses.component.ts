@@ -1,7 +1,9 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { MeasurementsService } from '../../../services/measurements.service';
+import { ConfigService } from '../../../services/config.service';
+import { MeterReadingService } from '../../../services/meter-reading.service';
 import { EventService } from '../../../services/event.service';
 import { Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import * as chroma from 'chroma-js';
 
 @Component({
@@ -11,33 +13,22 @@ import * as chroma from 'chroma-js';
 })
 export class WhatusesComponent implements OnInit {
   @ViewChild('echart') container: ElementRef;
-  transitionendSubscription: Subscription;
-  config: any;
-  testOne = 0;
-  lastValidLoad = 0;
-  maxPower = 5000;
-  consumers =  [
-    'downstairs_power',
-    'upstairs_power',
-    'over_garage_power',
-    'kitchen_power',
-    'living_room_and_dmx',
-    'kitchen_island',
-    'ovens',
-    'washing_machines',
-    'water_heater',
-    'evolution',
-    'lighting'
-  ];
-  echartsIntance: any;
+
+  private transitionendSubscription: Subscription;
+
+  private configKeys = {
+    'load': ['total_load', 'metered_load']
+  };
+  private consumers = [];
+  private echartsInstance: any;
   updateOptions: any;
   options = {
     grid: {
-        top: '5%',
-        left: '1%',
-        right: '5%',
-        bottom: '3%',
-        containLabel: true
+      top: '5%',
+      left: '2.3%',
+      right: '5%',
+      bottom: '3%',
+      containLabel: true
     },
     tooltip: {
       trigger: 'axis'
@@ -63,17 +54,20 @@ export class WhatusesComponent implements OnInit {
     ]
   };
 
-	constructor(private measurementsService: MeasurementsService, private eventService: EventService) {
-    measurementsService.measurementSource$.subscribe(measurements => {
-      this.refresh(measurements);
+	constructor(private configService: ConfigService, private meterReadingService: MeterReadingService, private eventService: EventService) {
+    let lookup = configService.getLookup(this.configKeys);
+    meterReadingService.meterReadingSource$.pipe(debounceTime(500)).subscribe(meterReadings => {
+      this.refresh(meterReadings, lookup);
     });
   }
 
   ngOnInit() {
     this.transitionendSubscription = this.eventService.onTransitionend$.pipe().subscribe(() => {
-      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
-        this.echartsIntance.resize({
-          width: this.container.nativeElement.offsetWidth
+      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0 &&
+          this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
+        this.echartsInstance.resize({
+          width: this.container.nativeElement.offsetWidth,
+          height: this.container.nativeElement.offsetHeight
         });
       }
     });
@@ -86,21 +80,50 @@ export class WhatusesComponent implements OnInit {
   }
 
   onChartInit(chart) {
-    this.echartsIntance = chart;
+    this.echartsInstance = chart;
+    this.echartsInstance.resize({
+      width: this.container.nativeElement.offsetWidth,
+      height: this.container.nativeElement.offsetHeight
+    });
   }
 
-  refresh(measurements) {
+  refresh(meterReadings, lookup) {
     let consumerData = [];
-    let monitored = 0;
-    let colors = chroma.scale(['orange','purple']).mode('hcl').colors(this.consumers.length);
-    this.consumers.forEach((item, index) => {
-      monitored = monitored + measurements.data[item].value;
-      consumerData.push({
-        'name': measurements.data[item].id,
-        'value': measurements.data[item].value,
-        'itemStyle': {color: colors[index]}
-      });
+    let other_loads = 0;
+    let other_loads_color = 0;
+    // Use sorted ids so that the colours used are in a known order that can be
+    // reproduced in other components if necessary
+    let ids = Object.keys(lookup).sort();
+    let colors = chroma.scale(['orange','purple']).mode('hcl').colors(ids.length);
+    meterReadings.forEach(readings => {
+      let reading = readings[readings.length - 1];
+      if (ids.includes(reading.id)) {
+        if (lookup[reading.id].source == reading.source) {
+          if (lookup[reading.id].key == 'metered_load') {
+            consumerData.push({
+              'name': reading.id,
+              'value': reading.reading,
+              'itemStyle': {color: colors[ids.indexOf(reading.id)]}
+            });
+            other_loads -= reading.reading;
+          } else if (lookup[reading.id].key == 'total_load'){
+            other_loads += reading.reading;
+            other_loads_color = colors[ids.indexOf(reading.id)]
+          }
+        }
+      }
     });
+
+    // Account for any stange adding up of loads
+    if (other_loads < 0) {
+      other_loads = 0
+    }
+    consumerData.push({
+      'name': 'Other Loads',
+      'value': other_loads,
+      'itemStyle': other_loads_color
+    });
+
     consumerData.sort((a, b) => {
             return a.value - b.value;
     });

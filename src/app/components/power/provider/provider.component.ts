@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { MeasurementsService } from '../../../services/measurements.service';
+import { ConfigService } from '../../../services/config.service';
+import { MeterReadingService } from '../../../services/meter-reading.service';
 import { EventService } from '../../../services/event.service';
 import { Subscription } from 'rxjs';
 
@@ -10,17 +11,54 @@ import { Subscription } from 'rxjs';
 })
 export class ProviderComponent implements OnInit {
   @ViewChild('echart') container: ElementRef;
-  transitionendSubscription: Subscription;
-  chartWidth: number;
-  chartHeight: number;
-  gridData = [];
-  loadData = [];
-  solarData = [];
-  batteryData = [];
-  chargeData = [];
-  echartsIntance: any;
-  updateOptions: any;
-  options = {
+
+  private transitionendSubscription: Subscription;
+  private echartsInstance: any;
+
+  private provider: any = [];
+  public updateOptions: any;
+  public options = {};
+
+  constructor(private configService: ConfigService, private meterReadingService: MeterReadingService, private eventService: EventService) {
+    let lookup = configService.getLookup({
+      'grid': ['total_power'],
+      'solar': ['total_power'],
+      'battery': ['total_power', 'state_of_charge'],
+      'wind': ['total_power'],
+      'load': ['total_load']
+    });
+    let colors = {'grid': '#c62828', 'solar': '#009688', 'battery': '#0277bd', 'wind': '#546e7a'};
+    let legend = [];
+    let series = [];
+
+    Object.keys(lookup).forEach((item, index) => {
+      this.provider.push({
+        'name': item,
+        'itemindex': lookup[item]['index'],
+      });
+      let yindex = 0;
+      if (lookup[item]['key'] == 'state_of_charge') {
+        yindex = 1;
+      }
+      series.push({
+        type: 'line',
+        name: item,
+        smooth: true,
+        showSymbol: false,
+        yAxisIndex: yindex,
+        /*
+        areaStyle: {
+            opacity: 0.3
+        },
+        */
+        lineStyle: {
+          color: colors[lookup[item]['type']]
+        },
+        data: []
+      });
+    });
+
+    this.options = {
       tooltip: {
           trigger: 'axis',
           axisPointer: {
@@ -69,88 +107,22 @@ export class ProviderComponent implements OnInit {
           max: 100
         }
       ],
-      series: [
-        {
-          type: 'line',
-          name: 'Grid',
-          smooth: true,
-          showSymbol: false,
-          areaStyle: {
-              opacity: 0.3
-          },
-          lineStyle: {
-            color: '#ee0000'
-          },
-          data: this.gridData
-        },
-        {
-          type: 'line',
-          name: 'Load',
-          smooth: true,
-          showSymbol: false,
-          areaStyle: {
-              opacity: 0.3
-          },
-          lineStyle: {
-            color: '#a0a0a0'
-          },
-          data: this.loadData
-        },
-        {
-          type: 'line',
-          name: 'Solar',
-          smooth: true,
-          showSymbol: false,
-          areaStyle: {
-              opacity: 0.3
-          },
-          lineStyle: {
-            color: '#00ee00'
-          },
-          data: this.solarData
-        },
-        {
-          type: 'line',
-          name: 'Battery',
-          smooth: true,
-          showSymbol: false,
-          areaStyle: {
-              opacity: 0.3
-          },
-          lineStyle: {
-            color: '#0000ee'
-          },
-          data: this.batteryData
-        },
-        {
-          type: 'line',
-          name: 'Charge',
-          smooth: true,
-          showSymbol: false,
-          yAxisIndex: 1,
-          areaStyle: {
-              opacity: 0.3
-          },
-          lineStyle: {
-            color: '#005500'
-          },
-          data: this.chargeData
-        }
-      ]
-  };
+      animation: false,
+      series: series
+    };
 
-  constructor(private measurementsService: MeasurementsService, private eventService: EventService) {
-    measurementsService.measurementSource$.subscribe(measurements => {
-      this.refreshProviderData(measurements);
+    meterReadingService.meterReadingSource$.subscribe(meterReadings => {
+      this.refreshData(meterReadings, lookup);
     });
-
   }
 
   ngOnInit() {
     this.transitionendSubscription = this.eventService.onTransitionend$.pipe().subscribe(() => {
-      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
-        this.echartsIntance.resize({
-          width: this.container.nativeElement.offsetWidth
+      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0 &&
+          this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
+        this.echartsInstance.resize({
+          width: this.container.nativeElement.offsetWidth,
+          height: this.container.nativeElement.offsetHeight
         });
       }
     });
@@ -163,64 +135,70 @@ export class ProviderComponent implements OnInit {
   }
 
   onChartInit(chart) {
-    this.echartsIntance = chart;
+    this.echartsInstance = chart;
+    this.echartsInstance.resize({
+      width: this.container.nativeElement.offsetWidth,
+      height: this.container.nativeElement.offsetHeight
+    });
   }
 
-  refreshProviderData(measurements) {
-    // Sometimes generates a spurious value. If it does then ignore all readings
-    if (measurements.data.pload.value < 30000) {
-      let time = new Date(measurements.data.pgrid.time);
-      let value = [time.getFullYear(), time.getMonth() + 1, time.getDate()].join('/') + ' ' + time.toTimeString().split(' ')[0];
-      this.gridData.push({
-        'name': 'Grid',
-        'value':[value, measurements.data.pgrid.value]
-      });
+  refreshData(meterReadings, lookup) {
+    let ids = Object.keys(lookup);
+    let series = this.options['series'];
 
-      value = [time.getFullYear(), time.getMonth() + 1, time.getDate()].join('/') + ' ' + time.toTimeString().split(' ')[0];
-      this.loadData.push({
-        'name': 'Load',
-        'value':[value, measurements.data.pload.value]
-      });
-
-      let pSolar = Math.round(measurements.data.vpv.value * measurements.data.ipv.value);
-      value = [time.getFullYear(), time.getMonth() + 1, time.getDate()].join('/') + ' ' + time.toTimeString().split(' ')[0];
-      this.solarData.push({
-        'name': 'Solar',
-        'value':[value, pSolar]
-      });
-
-      let pBattery = Math.round(measurements.data.vbattery.value * measurements.data.ibattery.value);
-      value = [time.getFullYear(), time.getMonth() + 1, time.getDate()].join('/') + ' ' + time.toTimeString().split(' ')[0];
-      this.batteryData.push({
-        'name': 'Battery',
-        'value':[value, pBattery]
-      });
-
-      value = [time.getFullYear(), time.getMonth() + 1, time.getDate()].join('/') + ' ' + time.toTimeString().split(' ')[0];
-      this.chargeData.push({
-        'name': 'Charge',
-        'value':[value, measurements.data.soc.value]
-      });
-
-      this.updateOptions = {
-        series: [
-          {
-            data: this.gridData
-          },
-          {
-            data: this.loadData
-          },
-          {
-            data: this.solarData
-          },
-          {
-            data: this.batteryData
-          },
-          {
-            data: this.chargeData
+    meterReadings.forEach(readings => {
+      readings.forEach(reading => {
+        if (ids.includes(reading.id)) {
+          if (lookup[reading.id].source == reading.source) {
+            let index = Object.keys(lookup).indexOf(reading.id);
+            let time = new Date(reading.time);
+            let timeValue = [time.getFullYear(), time.getMonth() + 1, time.getDate()].join('/') + ' ' + time.toTimeString().split(' ')[0];
+            series[index].data.push({
+              'name': reading.id,
+              'value':[timeValue, Math.round(reading.reading)]
+            });
+            while (reading.time - new Date(series[index].data[0].value[0]).getTime() > (1000*60*60*24)) {
+              series[index].data.shift();
+            }
+            /*
+            switch (lookup[reading.id].key) {
+              case 'total_power':
+                this.seriesData[lookup[reading.id].type].push({
+                  'name': reading.id,
+                  'value':[reading, Math.round(reading.reading)]
+                });
+                while (reading.time - new Date(this.seriesData[lookup[reading.id].type][0].reading[0]).getTime() > (1000*60*60*24)) {
+                  this.seriesData[lookup[reading.id].type].shift();
+                }
+                break;
+              case 'state_of_charge':
+                this.seriesData['soc'].push({
+                  'name': reading.id,
+                  'value':[value, Math.round(reading.reading)]
+                });
+                while (reading.time - new Date(this.seriesData['soc'][0].reading[0]).getTime() > (1000*60*60*24)) {
+                  this.seriesData['soc'].shift();
+                }
+                break;
+              case 'total_load':
+                this.seriesData['load'].push({
+                  'name': reading.id,
+                  'value':[value, Math.round(reading.reading)]
+                });
+                while (reading.time - new Date(this.seriesData['load'][0].reading[0]).getTime() > (1000*60*60*24)) {
+                  this.seriesData['load'].shift();
+                }
+                break;
+            }
+            */
           }
-        ]
-      };
-    }
+        }
+      });
+    });
+
+    // let series = this.options['series'];
+    this.updateOptions = {
+      series: series
+    };
   }
 }

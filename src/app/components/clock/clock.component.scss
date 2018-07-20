@@ -1,0 +1,24 @@
+.clockbox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding-right: 10px;
+}
+
+.timebox {
+  display: flex;
+  align-items: flex-end;
+}
+
+.time{
+  align-self: flex-end;
+  margin-bottom: 0px !important;
+}
+
+.ampm {
+  align-self: flex-end;
+  margin-bottom: 0px !important;
+}
+
+.date {
+}

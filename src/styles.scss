@@ -1,4 +1,29 @@
 /* You can add global styles to this file, and also import other style files */
+@import '~@angular/material/theming';
+
+// Be sure that you only ever include this mixin once!
+@include mat-core();
+
+@import 'energy-theme.scss';
+@import 'app/layouts/summary-layout/summary-layout.theme.scss';
+
+@mixin custom-component-themes($theme) {
+  @include summary-layout-theme($theme);
+}
+
+$custom-typography: mat-typography-config(
+  $font-family: 'Roboto, monospace',
+  $title: mat-typography-level(32px, 110%, 500),
+  $subheading-1: mat-typography-level(24px, 110%, 500)
+);
+
+@include mat-base-typography($custom-typography);
+
+.default-theme {
+  @include angular-material-theme($energy-theme);
+  @include custom-component-themes($energy-theme);
+}
+
 .valign-end-wrapper {
     display: -webkit-box;
     display: -webkit-flex;
@@ -31,3 +56,5 @@
         -ms-flex-align: flex-row;
             align-items: flex-row;
 }
+
+body { margin: 0; }

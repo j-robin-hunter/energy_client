@@ -1,0 +1,57 @@
+
+<div class="costbox" (swipeleft)="forwardDate($event)" (swiperight)="backwardDate($event)" (panstart)="panStart($event)" (pan)="pan($event)">
+  <div class="amount">
+    <div *ngIf="cost >= 0; then incomeTemplate else expenditureTemplate"></div>
+    <ng-template #incomeTemplate>
+      <p class="income mat-title">{{cost | currency:currency:'symbol':'1.2-2':locale}}</p>
+    </ng-template>
+    <ng-template #expenditureTemplate>
+      <p class="expense mat-title">{{cost | currency:currency:'symbol':'1.2-2':locale}}</p>
+    </ng-template>
+    <div class="typebox">
+      <button mat-icon-button (click)="backwardDate($event)">
+        <mat-icon aria-label="back">arrow_back</mat-icon>
+      </button>
+      <div class="amountfor">{{amountFor}}</div>
+      <button mat-icon-button  [disabled]="fowardDisabled" (click)="forwardDate($event)">
+        <mat-icon aria-label="forwards">arrow_forwards</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="tariffs">
+    <div *ngIf="meterTariff.length === 0; then noTarrifsTemplate else tariffsTemplate"></div>
+    <ng-template #noTarrifsTemplate>
+      <div class="notariffs">No tariffs are available for this period</div>
+    </ng-template>
+    <ng-template #tariffsTemplate>
+      <div class="tarifftable" *ngFor="let tariff of meterTariff">
+        <div class="tariffname">{{tariff.name}}</div>
+        <div class="tariffrateid">{{tariff.rateid}}</div>
+        <div class="tarifftariff">{{tariff.tariff}} + {{tariff.tax}}</div>
+        <div class="tariffamount">{{tariff.amount | currency:currency:'symbol':'1.2-2':locale}}</div>
+      </div>
+    </ng-template>
+  </div>
+
+  <div #echart class="chart">
+    <div
+      style="height: 180px;"
+      echarts [options]="options"
+      [merge]="updateOptions"
+      (chartInit)="onChartInit($event)"
+      class="cost-chart">
+    </div>
+  </div>
+
+  <div class="tariffspace"></div>
+
+  <div class="card-tabs">
+    <mat-tab-group mat-stretch-tabs [(selectedIndex)]="selectedTab" (selectedTabChange)="tabChange($event)">
+      <mat-tab *ngFor="let period of periods">
+        <ng-template mat-tab-label>{{period}}</ng-template>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+
+</div>

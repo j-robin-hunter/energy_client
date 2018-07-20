@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { MeasurementsService } from '../../../services/measurements.service';
+import { MeterReadingService } from '../../../services/meter-reading.service';
+import { ConfigService } from '../../../services/config.service';
 import { EventService } from '../../../services/event.service';
 import { Subscription } from 'rxjs';
 import * as chroma from 'chroma-js';
@@ -11,24 +12,19 @@ import * as chroma from 'chroma-js';
 })
 export class ConsumerComponent implements OnInit {
   @ViewChild('echart') container: ElementRef;
-  transitionendSubscription: Subscription;
-  consumers =  [
-    'downstairs_power',
-    'upstairs_power',
-    'over_garage_power',
-    'kitchen_power',
-    'living_room_and_dmx',
-    'kitchen_island',
-    'ovens',
-    'washing_machines',
-    'water_heater',
-    'evolution',
-    'lighting'
-  ];
-  echartsIntance: any;
-  series = [];
-  updateOptions: any;
-  options = {
+
+  private transitionendSubscription: Subscription;
+
+  private configKeys = {
+    'load': ['total_load', 'metered_load']
+  };
+
+  private seriesData = [];
+  private series = [];
+  private consumers = [];
+  private echartsInstance: any;
+  public updateOptions: any;
+  public options = {
     tooltip: {
       trigger: 'axis',
       axisPointer: {
@@ -38,7 +34,7 @@ export class ConsumerComponent implements OnInit {
     grid: {
       left: '0%',
       right: '3%',
-      bottom: '3%',
+      bottom: '15%',
       containLabel: true
     },
     dataZoom: [
@@ -47,10 +43,13 @@ export class ConsumerComponent implements OnInit {
         realtime: true
       }
     ],
+    legend: {
+      type: 'scroll'
+    },
     xAxis: {
       type: 'time',
       splitLine: {
-        show: false
+        show: true
       }
     },
     yAxis: {
@@ -60,24 +59,51 @@ export class ConsumerComponent implements OnInit {
       splitLine: {
         show: true
       }
-    }
+    },
+    animation: false
   };
 
-  constructor(private measurementsService: MeasurementsService, private eventService: EventService) {
-    measurementsService.measurementSource$.subscribe(measurements => {
-      this.refreshConsumerData(measurements);
+  constructor(private configService: ConfigService, private meterReadingService: MeterReadingService, private eventService: EventService) {
+    let lookup = configService.getLookup(this.configKeys);
+    let legend = [];
+    // Use sorted ids so that the colours used are in a known order that can be
+    // reproduced in other components if necessary
+    Object.keys(lookup).sort().forEach(id => {
+      this.consumers.push(id);
+      legend.push({'name': id});
+      this.series.push({
+        'type': 'line',
+        'smooth': true,
+        'name': id,
+        /*
+        'areaStyle' : {'opacity': 0.5},
+        */
+        'showSymbol': false,
+        'data': []
+      });
     });
-    let colors = chroma.scale(['orange','purple']).mode('hcl').colors(this.consumers.length);
+
+    let colors = chroma.scale(['orange','purple']).mode('hcl').colors(this.series.length);
     this.updateOptions = {
-      color: colors
+      color: colors,
+      legend: {
+        data: legend
+      },
+      series: this.series
     }
+
+    meterReadingService.meterReadingSource$.subscribe(meterReadings => {
+      this.refreshData(meterReadings, lookup);
+    });
   }
 
   ngOnInit() {
     this.transitionendSubscription = this.eventService.onTransitionend$.pipe().subscribe(() => {
-      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
-        this.echartsIntance.resize({
-          width: this.container.nativeElement.offsetWidth
+      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0 &&
+          this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
+        this.echartsInstance.resize({
+          width: this.container.nativeElement.offsetWidth,
+          height: this.container.nativeElement.offsetHeight
         });
       }
     });
@@ -90,46 +116,41 @@ export class ConsumerComponent implements OnInit {
   }
 
   onChartInit(chart) {
-    this.echartsIntance = chart;
-    this.echartsIntance.resize({width: 'auto', height: 'auto'});
+    this.echartsInstance = chart;
+    this.echartsInstance.resize({width: 'auto', height: 'auto'});
   }
 
-  refreshConsumerData(measurements) {
-    let legend = [];
-    this.consumers.forEach((item, index) => {
-      legend.push({'name': measurements.data[item].id});
-      if (this.series.length == index) {
-        this.series.push({
-          'type': 'line',
-          'smooth': true,
-          'name': measurements.data[item].id,
-          'areaStyle' : {'opacity': 0.5},
-          'showSymbol': false,
-          'data': []
-        });
-      }
-      let time = new Date(measurements.data[item].time);
-      let value = [time.getFullYear(), time.getMonth() + 1, time.getDate()].join('/') + ' ' + time.toTimeString().split(' ')[0];
-      let dataLength = this.series[index].data.length;
-      let data = {
-          'name': measurements.data[item].id,
-          'value':[value, measurements.data[item].value]
-        };
-      if (dataLength == 0) {
-        this.series[index].data.push(data);
-      } else {
-        if (this.series[index].data[dataLength - 1].value[0] != value) {
-          this.series[index].data.push(data);
+  refreshData(meterReadings, lookup) {
+    let seriesLookup = {};
+    let other_loads = 0;
+    this.series.forEach((item, index) => {
+      seriesLookup[item.name] = index;
+    });
+    let ids = Object.keys(lookup);
+    meterReadings.forEach(readings => {
+      other_loads = 0;
+      readings.forEach(reading => {
+        if (ids.includes(reading.id)) {
+          if (lookup[reading.id].source == reading.source) {
+            // Get the series for this reading from the seriesLookup
+            let time = new Date(reading.time);
+            let timeValue = [time.getFullYear(), time.getMonth() + 1, time.getDate()].join('/') + ' ' + time.toTimeString().split(' ')[0];
+            let data = {
+              'name': reading.id,
+              'value':[timeValue, Math.round(reading.reading)]
+            };
+            other_loads -= reading.reading;
+            let seriesData = this.series[seriesLookup[reading.id]].data;
+            seriesData.push(data);
+            while (reading.id, reading.time - new Date(seriesData[0].value[0]).getTime() > (1000*60*60*24)) {
+              seriesData.shift();
+            }
+          }
         }
-      }
+      });
     });
 
     this.updateOptions = {
-      legend: {
-        show: true,
-        type: 'scroll',
-        data: legend
-      },
       series: this.series
     };
   }

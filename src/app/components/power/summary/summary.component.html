@@ -1,10 +1,75 @@
-<div #echart>
-  <div
-    style="height: 270px;"
-    class="app-summary"
-    echarts [options]="options"
-    [merge]="updateOptions"
-    (chartInit)="onChartInit($event)"
-    class="supply-chart">
+<div class="summarybox">
+  <div class="power">
+    <p class="load mat-title">{{currentProvided/1000 | number:'1.2-2' }} kW</p>
+  </div>
+
+  <div *ngIf="spinner; then doSpinner else doProviders"></div>
+  <ng-template #doSpinner>
+    <div class="spinner">
+      <mat-spinner></mat-spinner>
+      <p>LOADING</p>
+    </div>
+  </ng-template>
+  <ng-template #doProviders>
+    <div class="providers">
+      <div *ngIf="summary.length === 0; then noProvidersTemplate else providersTemplate"></div>
+      <ng-template #noProvidersTemplate>
+        <div class="noproviders">No power providers are registered</div>
+      </ng-template>
+      <ng-template #providersTemplate>
+        <div class="providertable" *ngFor="let provider of summary">
+          <div class="providername">{{provider.name}}</div>
+          <div *ngIf="provider.type == 'battery'; then ischarging else isgrid"></div>
+          <ng-template #ischarging>
+            <div *ngIf="provider.power < 0; then charging else discharging"></div>
+            <ng-template #charging>
+              <div class="providericon"><mat-icon svgIcon="battery-charging-{{provider.detail | soc}}"></mat-icon></div>
+              <div class="providerdetail">{{provider.detail | number:'1.0-0'}}% charge </div>
+              </ng-template>
+            <ng-template #discharging>
+              <div class="providericon"><mat-icon svgIcon="battery-{{provider.detail | soc}}"></mat-icon></div>
+              <div class="providerdetail">{{provider.detail | number:'1.0-0'}}% charge </div>
+            </ng-template>
+          </ng-template>
+          <ng-template #isgrid>
+            <div *ngIf="provider.type == 'grid'; then isexporting else other"></div>
+            <ng-template #isexporting>
+              <div *ngIf="provider.power < 0; then export else import"></div>
+              <ng-template #export>
+                <div class="providericon"><mat-icon svgIcon="grid-export"></mat-icon></div>
+                <div class="providerdetail"></div>
+              </ng-template>
+              <ng-template #import>
+                <div class="providericon"><mat-icon svgIcon="grid"></mat-icon></div>
+                <div class="providerdetail"></div>
+              </ng-template>
+            </ng-template>
+            <ng-template #other>
+              <div *ngIf="provider.type == 'solar'; then solar else wind"></div>
+              <ng-template #solar>
+                <div class="providericon"><mat-icon svgIcon="weather-sunny"></mat-icon></div>
+                <div class="providerdetail">{{provider.detail | number:'1.0-0'}}% yield</div>
+              </ng-template>
+              <ng-template #wind>
+                <div class="providericon"><mat-icon svgIcon="weather-windy"></mat-icon></div>
+                <div class="providerdetail">{{provider.detail | number:'1.0-0'}}% yield</div>
+              </ng-template>
+            </ng-template>
+          </ng-template>
+          <div class="providerpower">{{provider.power | number:'1.0-0'}} W</div>
+        </div>
+      </ng-template>
+    </div>
+  </ng-template>
+
+  <div #echart>
+    <div
+      style="height: 270px;"
+      class="app-summary"
+      echarts [options]="options"
+      [merge]="updateOptions"
+      (chartInit)="onChartInit($event)"
+      class="supply-chart">
+    </div>
   </div>
 </div>
