@@ -36,11 +36,13 @@ export class SavingComponent implements OnInit {
   private currentTariffs = [];
   private compareTariffs = [{'start': 0, 'amount': 0.157}];
   private savingsMade: any = {};
+  private power;
 
   public periods = ['DAY', 'WEEK', 'MONTH', 'YEAR'];
   public saving: number = 0;
   public savingsFor: string;
   public fowardDisabled: boolean = true;
+  public selectedTab: number = 0;
   public currency = 'GBP';
   public locale = 'en-GB';
   public updateOptions: any;
@@ -114,7 +116,7 @@ export class SavingComponent implements OnInit {
     this.locale = configService.getConfigurationValue('locale') || this.locale;
     this.currency = LocaleCurrency.getCurrency(this.locale.split('.')[0]);
 
-    let power = configService.getPower({
+    this.power = configService.getPower({
       'grid': ['meter'],
       'solar': ['meter'],
       'battery': ['meter'],
@@ -123,9 +125,9 @@ export class SavingComponent implements OnInit {
     });
 
     let legend = [];
-    Object.keys(power).forEach(item => {
-      if (power[item].type != 'load') {
-        this.savingsMade[power[item].type] = {'name': item, 'saving': 0, 'text': savingText[power[item].type]};
+    Object.keys(this.power).forEach(item => {
+      if (this.power[item].type != 'load') {
+        this.savingsMade[this.power[item].type] = {'name': item, 'saving': 0, 'text': savingText[this.power[item].type]};
         legend.push({'name': item, 'icon': 'circle'});
         this.series.push({
           'type': 'bar',
@@ -151,7 +153,7 @@ export class SavingComponent implements OnInit {
     }
 
     timer(0, TICK).subscribe(val => {
-      this.update(power);
+      this.update();
     });
   }
 
@@ -187,12 +189,18 @@ export class SavingComponent implements OnInit {
   }
 
   backwardDate(event) {
+    this.fowardDisabled = false;
+    this.updateHistory(-1);
   }
 
   forwardDate(event) {
+    this.updateHistory(1);
   }
 
   tabChange(event) {
+    this.displayPeriod = this.periods[event.index];
+    this.startDate = Moment(this.endDate).subtract(1, this.displayPeriod);
+    this.update();
   }
 
   setInitialDates() {
@@ -202,7 +210,25 @@ export class SavingComponent implements OnInit {
     this.fowardDisabled = true;
   }
 
-  update(power) {
+  updateHistory(change) {
+    this.startDate.add(change, this.displayPeriod);
+    this.endDate = Moment(this.startDate).add(1, this.displayPeriod);
+    if (this.endDate.isAfter(Moment().endOf('day'))) {
+      if (this.displayPeriod == 'DAY') {
+        this.setInitialDates();
+        this.update();
+      } else {
+        this.selectedTab -= 1;
+        this.displayPeriod = this.periods[this.selectedTab];
+        this.fowardDisabled = false;
+        this.updateHistory(1);
+      }
+    } else {
+      this.update();
+    }
+  }
+
+  update() {
     if (this.fowardDisabled == true && this.endDate.isBefore(Moment())) {
       this.setInitialDates();
     }
@@ -211,14 +237,14 @@ export class SavingComponent implements OnInit {
     let lastSavings;
     let lastTime;
     let accrurredSaving = 0;
-    Object.keys(power).forEach(item => {
+    Object.keys(this.power).forEach(item => {
       if (ids) {
         ids += `,"${item}"`;
       } else {
         ids = `"${item}"`;
       }
-      if (power[item].type != 'load') {
-        this.savingsMade[power[item].type]['saving'] = 0;
+      if (this.power[item].type != 'load') {
+        this.savingsMade[this.power[item].type]['saving'] = 0;
       }
     });
     let seriesLookup = {};
@@ -236,7 +262,7 @@ export class SavingComponent implements OnInit {
             'wind': {'reading': 0 },
             'load': {'reading': 0 }
           };
-          data[power[reading.id].type].reading += reading.reading;
+          data[this.power[reading.id].type].reading += reading.reading;
           savings[reading.time] = data;
         });
       });
@@ -249,17 +275,17 @@ export class SavingComponent implements OnInit {
           let currentTariff = this.getTariff(this.currentTariffs, lastTime);
           let compareTariff = this.getTariff(this.compareTariffs, lastTime);
           let kw = (load / 1000) * (deltaTime / 3600000);
-          Object.keys(power).forEach(item => {
-            let r = lastSavings[power[item].type].reading;
-            if (power[item].type != 'load') {
+          Object.keys(this.power).forEach(item => {
+            let r = lastSavings[this.power[item].type].reading;
+            if (this.power[item].type != 'load') {
               let percent = r > 0 ? (r / load > 1 ? 1.0 : r / load) : 0;
               let saving = 0;
-              if (power[item].type == 'grid') {
+              if (this.power[item].type == 'grid') {
                 saving = kw * percent * (compareTariff - currentTariff);
               } else {
                 saving = kw * percent *  currentTariff;
               }
-              this.savingsMade[power[item].type].saving += saving;
+              this.savingsMade[this.power[item].type].saving += saving;
               accrurredSaving += saving;
               this.series[seriesLookup[item]].data.push({'name': item, 'value':[time, saving]});
             }

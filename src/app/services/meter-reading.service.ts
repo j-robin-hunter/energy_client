@@ -43,7 +43,7 @@ export class MeterReadingService {
   }
 
   getMeterReadingsBetween(ids, from, to) {
-    let query = `query MeterReadingsBetween {meterReadingsBetween(id:[${ids}] start:${from} end:0){time, module, id, unit, reading}}`;
+    let query = `query MeterReadingsBetween {meterReadingsBetween(id:[${ids}] start:${from} end:${to}){time, module, id, unit, reading}}`;
     return this.apollo.query({query: gql(query), fetchPolicy: 'no-cache'});
   }
 }
