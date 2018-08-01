@@ -5,7 +5,7 @@ import { environment } from '../../environments/environment';
 
 @Injectable()
 export class ConfigService {
-  private googleReverseKey = 'AIzaSyBrED62CyrSGV5fyFXSkEnxZDO5X9kAwVU';
+  private googleReverseKey = 'AIzaSyCmixIjtQOBEuqleIAdPY7Yc536zFs77ss';
   private configuration: any = null;
 
   constructor(private http: HttpClient) {
@@ -28,20 +28,21 @@ export class ConfigService {
    }
 
   getReverseGeolocation(latitude, longitude): Observable<any> {
-    return this.http.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&result_type=postal_town&key=${this.googleReverseKey}`);
+    // return this.http.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&result_type=postal_town&key=${this.googleReverseKey}`);
+    return this.http.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=12&addressdetails=1`);
   }
 
   getConfigurationValue(key) {
     return this.configuration[key];
   }
 
-  getConfigurationItemValues(item=null, key=null) {
-    if (item == null) {
-      return this.configuration.item;
+  getConfigurationPowerValues(power=null, key=null) {
+    if (power == null) {
+      return this.configuration.power;
     } else {
       let values = [];
-      this.configuration.item.forEach(config => {
-        if (config.type == item) {
+      this.configuration.power.forEach(config => {
+        if (config.type == power) {
           if (key == null || key == '') {
             values.push(config);
           } else {
@@ -56,19 +57,19 @@ export class ConfigService {
     }
   }
 
-  getLookup(configKeys) {
+  getPower(configKeys) {
     let result = {};
     let keys = Object.keys(configKeys);
 
-    this.configuration.item.forEach((item, index) => {
-      if (keys.includes(item.type)) {
-        configKeys[item.type].forEach(key => {
-          if (Array.isArray(item[key])) {
-            item[key].forEach(entry => {
-              result[entry.id] = {'type': item.type, 'source': entry.source, 'key': key, 'index': index};
+    this.configuration.power.forEach((power, index) => {
+      if (keys.includes(power.type)) {
+        configKeys[power.type].forEach(key => {
+          result[power[key].id] = {'type': power.type, 'module': power[key].module, 'key': key, 'index': index};
+          if (power.meter.circuit) {
+            result[power[key].id]['circuit'] = [];
+            power.meter.circuit.forEach(circuit => {
+              result[power[key].id]['circuit'].push(circuit);
             });
-          } else {
-            result[item[key].id] = {'type': item.type, 'source': item[key].source, 'key': key, 'index': index};
           }
         });
       }

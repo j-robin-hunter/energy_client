@@ -5,6 +5,8 @@
 
 export const environment = {
   production: false,
-  graphqlURL: 'http://192.168.1.161:4040/graphql',
-  configURL: 'http://192.168.1.161:4040/config/configuration'
+  //graphqlURL: window.location.origin + '/graphql',
+  //configURL: window.location.origin + '/config/configuration'
+  graphqlURL: 'http://localhost:5000' + '/graphql',
+  configURL: 'http://localhost:5000' + '/config/configuration'
 };

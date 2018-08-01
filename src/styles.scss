@@ -6,9 +6,11 @@
 
 @import 'energy-theme.scss';
 @import 'app/layouts/summary-layout/summary-layout.theme.scss';
+@import 'app/app.component.theme.scss';
 
 @mixin custom-component-themes($theme) {
   @include summary-layout-theme($theme);
+  @include app-component-theme($theme);
 }
 
 $custom-typography: mat-typography-config(

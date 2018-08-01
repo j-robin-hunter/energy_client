@@ -20,24 +20,24 @@ export class ProviderComponent implements OnInit {
   public options = {};
 
   constructor(private configService: ConfigService, private meterReadingService: MeterReadingService, private eventService: EventService) {
-    let lookup = configService.getLookup({
-      'grid': ['total_power'],
-      'solar': ['total_power'],
-      'battery': ['total_power', 'state_of_charge'],
-      'wind': ['total_power'],
-      'load': ['total_load']
+    let power = configService.getPower({
+      'grid': ['meter'],
+      'solar': ['meter'],
+      'battery': ['meter', 'state_of_charge'],
+      'wind': ['meter'],
+      'load': ['meter']
     });
     let colors = {'grid': '#c62828', 'solar': '#009688', 'battery': '#0277bd', 'wind': '#546e7a'};
     let legend = [];
     let series = [];
 
-    Object.keys(lookup).forEach((item, index) => {
+    Object.keys(power).forEach((item, index) => {
       this.provider.push({
         'name': item,
-        'itemindex': lookup[item]['index'],
+        'itemindex': power[item]['index'],
       });
       let yindex = 0;
-      if (lookup[item]['key'] == 'state_of_charge') {
+      if (power[item]['key'] == 'state_of_charge') {
         yindex = 1;
       }
       series.push({
@@ -52,7 +52,7 @@ export class ProviderComponent implements OnInit {
         },
         */
         lineStyle: {
-          color: colors[lookup[item]['type']]
+          color: colors[power[item]['type']]
         },
         data: []
       });
@@ -112,7 +112,7 @@ export class ProviderComponent implements OnInit {
     };
 
     meterReadingService.meterReadingSource$.subscribe(meterReadings => {
-      this.refreshData(meterReadings, lookup);
+      this.refreshData(meterReadings, power);
     });
   }
 
@@ -142,15 +142,15 @@ export class ProviderComponent implements OnInit {
     });
   }
 
-  refreshData(meterReadings, lookup) {
-    let ids = Object.keys(lookup);
+  refreshData(meterReadings, power) {
+    let ids = Object.keys(power);
     let series = this.options['series'];
 
     meterReadings.forEach(readings => {
       readings.forEach(reading => {
         if (ids.includes(reading.id)) {
-          if (lookup[reading.id].source == reading.source) {
-            let index = Object.keys(lookup).indexOf(reading.id);
+          if (power[reading.id].module == reading.module) {
+            let index = Object.keys(power).indexOf(reading.id);
             let time = new Date(reading.time);
             let timeValue = [time.getFullYear(), time.getMonth() + 1, time.getDate()].join('/') + ' ' + time.toTimeString().split(' ')[0];
             series[index].data.push({
@@ -160,43 +160,11 @@ export class ProviderComponent implements OnInit {
             while (reading.time - new Date(series[index].data[0].value[0]).getTime() > (1000*60*60*24)) {
               series[index].data.shift();
             }
-            /*
-            switch (lookup[reading.id].key) {
-              case 'total_power':
-                this.seriesData[lookup[reading.id].type].push({
-                  'name': reading.id,
-                  'value':[reading, Math.round(reading.reading)]
-                });
-                while (reading.time - new Date(this.seriesData[lookup[reading.id].type][0].reading[0]).getTime() > (1000*60*60*24)) {
-                  this.seriesData[lookup[reading.id].type].shift();
-                }
-                break;
-              case 'state_of_charge':
-                this.seriesData['soc'].push({
-                  'name': reading.id,
-                  'value':[value, Math.round(reading.reading)]
-                });
-                while (reading.time - new Date(this.seriesData['soc'][0].reading[0]).getTime() > (1000*60*60*24)) {
-                  this.seriesData['soc'].shift();
-                }
-                break;
-              case 'total_load':
-                this.seriesData['load'].push({
-                  'name': reading.id,
-                  'value':[value, Math.round(reading.reading)]
-                });
-                while (reading.time - new Date(this.seriesData['load'][0].reading[0]).getTime() > (1000*60*60*24)) {
-                  this.seriesData['load'].shift();
-                }
-                break;
-            }
-            */
           }
         }
       });
     });
 
-    // let series = this.options['series'];
     this.updateOptions = {
       series: series
     };

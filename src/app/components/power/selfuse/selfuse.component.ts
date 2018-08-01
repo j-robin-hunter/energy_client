@@ -289,7 +289,7 @@ export class SelfuseComponent implements OnInit {
   };
 
   constructor(private meterReadingService: MeterReadingService, private configService: ConfigService, private eventService: EventService) {
-    let batteryDetails = configService.getConfigurationItemValues('battery', 'detail');
+    let batteryDetails = configService.getConfigurationPowerValues('battery', 'detail');
     this.maxBatteryChargePower =
       (batteryDetails[0]['max_charge_current'] * batteryDetails[0]['voltage']) || this.maxBatteryChargePower;
     this.maxBatteryDischargePower =
@@ -298,9 +298,9 @@ export class SelfuseComponent implements OnInit {
     this.batteryAvailableAt = parseFloat(batteryDetails[0]['available_at']) || this.batteryAvailableAt;
     this.batteryMaxDischarge = parseFloat(batteryDetails[0]['max_discharge']) || this.batteryMaxDischarge;
 
-    let lookup = configService.getLookup(this.configKeys);
+    let power = configService.getPower(this.configKeys);
     meterReadingService.meterReadingSource$.subscribe(meterReadings => {
-      this.refreshData(meterReadings, lookup);
+      this.refreshData(meterReadings, power);
     });
   }
 
@@ -324,18 +324,18 @@ export class SelfuseComponent implements OnInit {
     this.echartsInstance = chart;
   }
 
-  refreshData(meterReadings, lookup) {
+  refreshData(meterReadings, power) {
     let load = 0;
     let soc = 0;
     let charge = 0;
     let solar = 0;
     let grid = 0;
-    let ids = Object.keys(lookup);
+    let ids = Object.keys(power);
     meterReadings.forEach(readings => {
       let reading = readings[readings.length - 1];
       if (ids.includes(reading.id)) {
-        if (lookup[reading.id].source == reading.source) {
-          switch (lookup[reading.id].key) {
+        if (power[reading.id].module == reading.module) {
+          switch (power[reading.id].key) {
             case 'total_load':
               load += Math.round(reading.value);
               break;
@@ -343,11 +343,11 @@ export class SelfuseComponent implements OnInit {
               soc += Math.round(reading.value);
               break;
             case 'total_power':
-              if (lookup[reading.id].type == 'grid') {
+              if (power[reading.id].type == 'grid') {
                 grid += Math.round(reading.value);
-              } if (lookup[reading.id].type == 'solar') {
+              } if (power[reading.id].type == 'solar') {
                 solar += Math.round(reading.value);
-              } if (lookup[reading.id].type == 'battery') {
+              } if (power[reading.id].type == 'battery') {
                 charge += Math.round(reading.value);
               }
               break;

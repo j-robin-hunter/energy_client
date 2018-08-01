@@ -1,4 +1,3 @@
-
 <div class="costbox" (swipeleft)="forwardDate($event)" (swiperight)="backwardDate($event)" (panstart)="panStart($event)" (pan)="pan($event)">
   <div class="amount">
     <div *ngIf="cost >= 0; then incomeTemplate else expenditureTemplate"></div>
@@ -53,5 +52,4 @@
       </mat-tab>
     </mat-tab-group>
   </div>
-
 </div>

@@ -26,40 +26,38 @@ export class SummaryComponent implements OnInit {
               private configService: ConfigService,
               private eventService: EventService) {
 
-    let lookup = configService.getLookup({
-      'grid': ['total_power'],
-      'solar': ['total_power'],
-      'battery': ['total_power', 'state_of_charge'],
-      'wind': ['total_load'],
-      'load': ['total_load']
+    let power = configService.getPower({
+      'grid': ['meter'],
+      'solar': ['meter'],
+      'battery': ['meter', 'state_of_charge'],
+      'wind': ['meter'],
+      'load': ['meter']
     });
     let colors = {'grid': '#c62828', 'solar': '#009688', 'battery': '#0277bd', 'wind': '#546e7a'};
     let legend = [];
     let series = [];
-    Object.keys(lookup).forEach((item, index) => {
-      if (lookup[item]['key'] == 'total_power' ) {
+    Object.keys(power).forEach((item, index) => {
+      if (power[item]['key'] == 'meter' && power[item]['type'] != 'load') {
         let rating = 0;
-        if (lookup[item]['type'] == 'solar' || lookup[item]['type'] == 'wind') {
-          configService.getConfigurationItemValues(lookup[item]['type']).forEach(type => {
-            if (type['total_power'].id == item) {
-              rating += type.detail.rating || 0;
-            }
-          });
-        }
+        configService.getConfigurationPowerValues(power[item]['type']).forEach(type => {
+          if (type.detail) {
+            rating += type.detail.rating || 0;
+          }
+        });
         this.summary.push({
           'name': item,
-          'type': lookup[item]['type'],
-          'itemindex': lookup[item]['index'],
+          'type': power[item]['type'],
+          'itemindex': power[item]['index'],
           'percent': 0,
           'power': 0,
           'rating': rating,
           'detail': 0});
-        let name = lookup[item]['type'];
+        let name = power[item]['type'];
         legend.push({
           name: name,
           icon: 'image://',
           textStyle: {
-            color: colors[lookup[item]['type']]
+            color: colors[power[item]['type']]
           }
         });
         series.push({
@@ -77,9 +75,9 @@ export class SummaryComponent implements OnInit {
               value: 0,
               itemStyle: {
                 normal: {
-                  color: colors[lookup[item]['type']],
+                  color: colors[power[item]['type']],
                   borderWidth: 4,
-                  borderColor: colors[lookup[item]['type']]
+                  borderColor: colors[power[item]['type']]
                 }
               }
             },
@@ -121,7 +119,7 @@ export class SummaryComponent implements OnInit {
       series: series
     };
     meterReadingService.meterReadingSource$.subscribe(meterReadings => {
-      this.refreshData(meterReadings, lookup);
+      this.refreshData(meterReadings, power);
     });
   }
 
@@ -145,36 +143,38 @@ export class SummaryComponent implements OnInit {
     this.echartsIntance = chart;
   }
 
-  refreshData(meterReadings, lookup) {
-    let calculatedLoad = 0;
-    this.summary.forEach(provider => {
-      provider.power = 0;
-      provider.percent = 0;
-      provider.detail = 0;
+  refreshData(meterReadings, power) {
+    let calculatedLoad = 0
+    this.summary.forEach(entry => {
+      entry.power = 0;
+      entry.percent = 0;
+      entry.detail = 0;
     });
     this.currentProvided = 0;
     meterReadings.forEach(readings => {
       let reading = readings[readings.length - 1];
-      let index = Object.keys(lookup).indexOf(reading.id);
+      let index = Object.keys(power).indexOf(reading.id);
       if (index >= 0) {
-        if (lookup[reading.id].source == reading.source) {
+        if (power[reading.id].module == reading.module) {
           let value =  Math.round(reading.reading);
-          if (lookup[reading.id].key == 'total_load') {
-            this.currentProvided += value;
-          } else if (lookup[reading.id].key == 'total_power') {
-            this.summary[index]['power'] += value;
-            if (value > 0) {
-              calculatedLoad += value;
-            }
-            if (lookup[reading.id].type == 'solar' || lookup[reading.id].type == 'wind') {
-              if (this.summary['rating'] != 0) {
-                this.summary[index]['detail'] = (this.summary[index]['power'] / this.summary[index]['rating']) * 100;
+          if (power[reading.id].key == 'meter') {
+            if (power[reading.id].type == 'load') {
+              this.currentProvided += value;
+            } else {
+              this.summary[index]['power'] += value;
+              if (value > 0) {
+                calculatedLoad += value;
+              }
+              if (power[reading.id].type == 'solar' || power[reading.id].type == 'wind') {
+                if (this.summary['rating'] != 0) {
+                  this.summary[index]['detail'] = (this.summary[index]['power'] / this.summary[index]['rating']) * 100;
+                }
               }
             }
-          } else if (lookup[reading.id].key == 'state_of_charge') {
+          } else if (power[reading.id].key == 'state_of_charge') {
             let i = 0;
             for (i = 0; i < this.summary.length; i++) {
-              if (this.summary[i].itemindex == lookup[reading.id].index) {
+              if (this.summary[i].itemindex == power[reading.id].index) {
                 break;
               }
             }
@@ -184,10 +184,10 @@ export class SummaryComponent implements OnInit {
       }
     });
     let series = this.options['series'];
-    this.summary.forEach((provider, index) => {
-      if (provider.power > 0) {
-        let percent = (provider.power / calculatedLoad) * 100;
-        provider.percent = percent;
+    this.summary.forEach((entry, index) => {
+      if (entry.power > 0) {
+        let percent = (entry.power / calculatedLoad) * 100;
+        entry.percent = percent;
         if (percent > 100) {
           percent = 100;
         }

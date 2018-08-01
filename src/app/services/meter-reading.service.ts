@@ -17,7 +17,7 @@ export class MeterReadingService {
 	getRecentMeterReadings() {
 		// Get measurements for past 24 hours.
 		let from = new Date().getTime() - (1000*60*60*24);
-		let query = `query MeterReadingsBetween {meterReadingsBetween(id:"*" start:${from} end:0){time, source, id, unit, reading}}`;
+		let query = `query MeterReadingsBetween {meterReadingsBetween(id:["*"] start:${from} end:0){time, module, id, unit, reading}}`;
 		return this.apollo.query({query: gql(query), fetchPolicy: 'no-cache'})
 		.pipe(response => {
 			return response;
@@ -33,12 +33,17 @@ export class MeterReadingService {
 	}
 
   getLatestMeterReadings() {
-		let query = `query MeterReadings {meterReading(id:"*"){time, source, id, unit, reading}}`;
+		let query = `query MeterReadings {meterReading(id:["*"]){time, module, id, unit, reading}}`;
     return this.apollo.query({query: gql(query), fetchPolicy: 'no-cache'})
     .pipe(response => {
       return response;
     }).subscribe(meterReadings => {
 			this.meterReadingSource.next(meterReadings.data['meterReading']);
 		});
+  }
+
+  getMeterReadingsBetween(ids, from, to) {
+    let query = `query MeterReadingsBetween {meterReadingsBetween(id:[${ids}] start:${from} end:0){time, module, id, unit, reading}}`;
+    return this.apollo.query({query: gql(query), fetchPolicy: 'no-cache'});
   }
 }

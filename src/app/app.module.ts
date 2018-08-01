@@ -12,6 +12,7 @@ import { MatIconRegistry, MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { ApolloModule } from 'apollo-angular';
 import { HttpLinkModule } from 'apollo-angular-link-http'
@@ -41,6 +42,7 @@ import { ToastComponent } from './components/toast/toast.component';
 import { CostComponent } from './components/power/cost/cost.component';
 import { SummaryLayoutComponent } from './layouts/summary-layout/summary-layout.component';
 import { SocPipe } from './pipes/soc.pipe';
+import { SavingComponent } from './components/power/saving/saving.component';
 
 export function configServiceFactory(configService: ConfigService):
   Function {
@@ -63,7 +65,8 @@ export function configServiceFactory(configService: ConfigService):
     ToastComponent,
     CostComponent,
     SummaryLayoutComponent,
-    SocPipe
+    SocPipe,
+    SavingComponent
   ],
   imports: [
     BrowserModule,
@@ -77,7 +80,8 @@ export function configServiceFactory(configService: ConfigService):
     MatIconModule,
     MatButtonModule,
     MatCardModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatTooltipModule
   ],
   providers: [
     WeatherService,

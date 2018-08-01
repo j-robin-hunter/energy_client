@@ -1,0 +1,48 @@
+<div class="savingsbox">
+  <div class="amount">
+    <p class="saving mat-title">{{saving | currency:currency:'symbol':'1.2-2':locale}}</p>
+    <div class="typebox">
+      <button mat-icon-button (click)="backwardDate($event)">
+        <mat-icon aria-label="back">arrow_back</mat-icon>
+      </button>
+      <div class="amountfor">{{savingsFor}}</div>
+      <button mat-icon-button  [disabled]="fowardDisabled" (click)="forwardDate($event)">
+        <mat-icon aria-label="forwards">arrow_forwards</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="savings">
+    <div *ngIf="savingsMade.length === 0; then noSavingsTemplate else savingsTemplate"></div>
+    <ng-template #noSavingsTemplate>
+      <div class="nosavings">No savings data is available for this period</div>
+    </ng-template>
+    <ng-template #savingsTemplate>
+      <div class="savingstable" *ngFor="let saving of getSavingsMade()">
+        <div class="savingname">{{saving.name}}</div>
+        <div class="savingtext">{{saving.text}}</div>
+        <div class="savingamount">{{saving.saving | currency:currency:'symbol':'1.2-2':locale}}</div>
+      </div>
+    </ng-template>
+  </div>
+
+  <div #echart class="chart">
+    <div
+      style="height: 180px;"
+      echarts [options]="options"
+      [merge]="updateOptions"
+      (chartInit)="onChartInit($event)"
+      class="cost-chart">
+    </div>
+  </div>
+
+  <div class="savingsspace"></div>
+
+  <div class="card-tabs">
+    <mat-tab-group mat-stretch-tabs [(selectedIndex)]="selectedTab" (selectedTabChange)="tabChange($event)">
+      <mat-tab *ngFor="let period of periods">
+        <ng-template mat-tab-label>{{period}}</ng-template>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>

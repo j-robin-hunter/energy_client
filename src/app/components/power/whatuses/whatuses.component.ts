@@ -17,7 +17,7 @@ export class WhatusesComponent implements OnInit {
   private transitionendSubscription: Subscription;
 
   private configKeys = {
-    'load': ['total_load', 'metered_load']
+    'load': ['meter']
   };
   private consumers = [];
   private echartsInstance: any;
@@ -55,9 +55,17 @@ export class WhatusesComponent implements OnInit {
   };
 
 	constructor(private configService: ConfigService, private meterReadingService: MeterReadingService, private eventService: EventService) {
-    let lookup = configService.getLookup(this.configKeys);
+    let power = configService.getPower(this.configKeys);
+    let circuit = {'Other Loads': {}};
+    Object.keys(power).forEach(key => {
+      if (power[key].circuit) {
+        power[key].circuit.forEach(item => {
+          circuit[item.id] = {'module': item.module};
+        });
+      }
+    });
     meterReadingService.meterReadingSource$.pipe(debounceTime(500)).subscribe(meterReadings => {
-      this.refresh(meterReadings, lookup);
+      this.refresh(meterReadings, power, circuit);
     });
   }
 
@@ -87,30 +95,28 @@ export class WhatusesComponent implements OnInit {
     });
   }
 
-  refresh(meterReadings, lookup) {
+  refresh(meterReadings, power, circuit) {
     let consumerData = [];
     let other_loads = 0;
     let other_loads_color = 0;
+
+    let ids = Object.keys(power);
+    let circuit_ids = Object.keys(circuit);
     // Use sorted ids so that the colours used are in a known order that can be
     // reproduced in other components if necessary
-    let ids = Object.keys(lookup).sort();
-    let colors = chroma.scale(['orange','purple']).mode('hcl').colors(ids.length);
+    circuit_ids.sort();
+    let colors = chroma.scale(['orange','purple']).mode('hcl').colors(circuit_ids.length);
     meterReadings.forEach(readings => {
       let reading = readings[readings.length - 1];
-      if (ids.includes(reading.id)) {
-        if (lookup[reading.id].source == reading.source) {
-          if (lookup[reading.id].key == 'metered_load') {
-            consumerData.push({
-              'name': reading.id,
-              'value': reading.reading,
-              'itemStyle': {color: colors[ids.indexOf(reading.id)]}
-            });
-            other_loads -= reading.reading;
-          } else if (lookup[reading.id].key == 'total_load'){
-            other_loads += reading.reading;
-            other_loads_color = colors[ids.indexOf(reading.id)]
-          }
-        }
+      if (circuit_ids.includes(reading.id) && circuit[reading.id].module == reading.module) {
+        consumerData.push({
+          'name': reading.id,
+          'value': reading.reading,
+          'itemStyle': {color: colors[circuit_ids.indexOf(reading.id)]}
+        });
+        other_loads -= reading.reading;
+      } else if (ids.includes(reading.id) && power[reading.id].module == reading.module) {
+        other_loads += reading.reading;
       }
     });
 
@@ -121,7 +127,7 @@ export class WhatusesComponent implements OnInit {
     consumerData.push({
       'name': 'Other Loads',
       'value': other_loads,
-      'itemStyle': other_loads_color
+      'itemStyle': {color: colors[circuit_ids.indexOf('Other Loads')]}
     });
 
     consumerData.sort((a, b) => {

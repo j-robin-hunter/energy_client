@@ -16,7 +16,7 @@ export class ConsumerComponent implements OnInit {
   private transitionendSubscription: Subscription;
 
   private configKeys = {
-    'load': ['total_load', 'metered_load']
+    'load': ['meter']
   };
 
   private seriesData = [];
@@ -64,17 +64,25 @@ export class ConsumerComponent implements OnInit {
   };
 
   constructor(private configService: ConfigService, private meterReadingService: MeterReadingService, private eventService: EventService) {
-    let lookup = configService.getLookup(this.configKeys);
+    let power = configService.getPower(this.configKeys);
+    let circuit = {};
+    Object.keys(power).forEach(key => {
+      if (power[key].circuit) {
+        power[key].circuit.forEach(item => {
+          circuit[item.id] = {'module': item.module};
+        });
+      }
+    });
     let legend = [];
     // Use sorted ids so that the colours used are in a known order that can be
     // reproduced in other components if necessary
-    Object.keys(lookup).sort().forEach(id => {
-      this.consumers.push(id);
-      legend.push({'name': id});
+    Object.keys(circuit).sort().forEach(item => {
+      this.consumers.push(item);
+      legend.push({'name': item});
       this.series.push({
         'type': 'line',
         'smooth': true,
-        'name': id,
+        'name': item,
         /*
         'areaStyle' : {'opacity': 0.5},
         */
@@ -93,7 +101,7 @@ export class ConsumerComponent implements OnInit {
     }
 
     meterReadingService.meterReadingSource$.subscribe(meterReadings => {
-      this.refreshData(meterReadings, lookup);
+      this.refreshData(meterReadings, power, circuit);
     });
   }
 
@@ -120,29 +128,27 @@ export class ConsumerComponent implements OnInit {
     this.echartsInstance.resize({width: 'auto', height: 'auto'});
   }
 
-  refreshData(meterReadings, lookup) {
+  refreshData(meterReadings, power, circuit) {
     let seriesLookup = {};
-    let other_loads = 0;
     this.series.forEach((item, index) => {
       seriesLookup[item.name] = index;
     });
-    let ids = Object.keys(lookup);
+    let ids = Object.keys(power);
+    let circuit_ids = Object.keys(circuit);
+    let other_loads = 0;
     meterReadings.forEach(readings => {
-      other_loads = 0;
       readings.forEach(reading => {
-        if (ids.includes(reading.id)) {
-          if (lookup[reading.id].source == reading.source) {
-            // Get the series for this reading from the seriesLookup
+        if ((circuit_ids.includes(reading.id)  && circuit[reading.id].module) || (ids.includes(reading.id) && power[reading.id].module == reading.module)) {
+          if (circuit_ids.includes(reading.id)) {
             let time = new Date(reading.time);
             let timeValue = [time.getFullYear(), time.getMonth() + 1, time.getDate()].join('/') + ' ' + time.toTimeString().split(' ')[0];
             let data = {
               'name': reading.id,
               'value':[timeValue, Math.round(reading.reading)]
             };
-            other_loads -= reading.reading;
             let seriesData = this.series[seriesLookup[reading.id]].data;
             seriesData.push(data);
-            while (reading.id, reading.time - new Date(seriesData[0].value[0]).getTime() > (1000*60*60*24)) {
+            while (reading.time - new Date(seriesData[0].value[0]).getTime() > (1000*60*60*24)) {
               seriesData.shift();
             }
           }

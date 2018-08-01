@@ -15,7 +15,15 @@ export class CityComponent implements OnInit {
     let longitude = configService.getConfigurationValue('longitude');
     configService.getReverseGeolocation(latitude, longitude).pipe().subscribe(reverse => {
       try {
-        this.city = reverse.results[0].address_components[0].long_name;
+        if (reverse.address.hamlet) {
+          this.city = reverse.address.hamlet;
+        } else if (reverse.address.village) {
+          this.city = reverse.address.village;
+        } else if (reverse.address.town) {
+          this.city = reverse.address.town;
+        } else if (reverse.address.city) {
+          this.city = reverse.address.city;
+        }
       } catch(e) {
         this.city = 'Location Not found';
       }

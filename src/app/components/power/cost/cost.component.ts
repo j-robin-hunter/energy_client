@@ -1,9 +1,10 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { MeterTariffService } from '../../../services/meter-tariff.service';
 import { ConfigService } from '../../../services/config.service';
 import { EventService } from '../../../services/event.service';
 import { Subscription, Observable, timer } from 'rxjs';
 import { registerLocaleData } from '@angular/common';
+import localeEn from '@angular/common/locales/en';
 import localeDe from '@angular/common/locales/de';
 import localeFr from '@angular/common/locales/fr';
 import localeEs from '@angular/common/locales/es';
@@ -84,12 +85,13 @@ export class CostComponent implements OnInit {
 
     this.setInitialDates();
 
+    registerLocaleData(localeEn);
     registerLocaleData(localeDe);
     registerLocaleData(localeFr);
     registerLocaleData(localeEs);
 
-    this.locale = configService.getConfigurationValue('locale');
-    this.currency =  LocaleCurrency.getCurrency(this.locale);
+    this.locale = configService.getConfigurationValue('locale') || this.locale;
+    this.currency = LocaleCurrency.getCurrency(this.locale.split('.')[0]);
 
     let legend = [];
     meterTariffService.getTariffs().forEach(tariff => {
@@ -142,6 +144,10 @@ export class CostComponent implements OnInit {
   onChartInit(chart) {
     this.echartsInstance = chart;
     this.echartsInstance.resize({width: 'auto', height: 'auto'});
+  }
+
+  panStart(event) {
+
   }
 
   pan(event) {
@@ -223,7 +229,7 @@ export class CostComponent implements OnInit {
       this.updateOptions = {
         xAxis: {
           min: this.startDate.valueOf() - 900000,
-          max:  this.endDate.valueOf()
+          max: this.endDate.valueOf()
         },
         series: this.series
       }
@@ -241,7 +247,7 @@ export class CostComponent implements OnInit {
       }
     }
     if (i >= this.meterTariff.length) {
-      this.meterTariff.push({'name': tariff.name, 'type': tariff.type, 'tariff': tariff.tariff, 'tax': tariff.tax, 'rateid': tariff.rateid, 'amount': 0});
+      this.meterTariff.push({'name': tariff.name, 'type': tariff.type, 'source': tariff.source, 'tariff': tariff.tariff, 'tax': tariff.tax, 'rateid': tariff.rateid, 'amount': 0});
     }
     if (tariff['type'] == 'income') {
       this.cost += tariff['amount'];

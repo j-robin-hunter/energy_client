@@ -14,16 +14,25 @@ export class MeterTariffService {
   }
 
   getMeterTariffsBetween(start, end): Observable<ApolloQueryResult<{}>> {
-  	let query = `query MeterTariffBetween {meterTariffBetween (id:"*" start:${start} end:${end}){time, amount, tariff, tax, type, name, rateid}}`
+  	let query = `query MeterTariffBetween {meterTariffBetween (id:["*"] start:${start} end:${end}){time, amount, tariff, tax, type, name, rateid, source}}`
   	return this.apollo.query({query: gql(query), fetchPolicy: 'no-cache'});
   }
 
   getLatestMeterTariffs(): Observable<ApolloQueryResult<{}>> {
-    let query = `query MeterTariff {meterTariff(id:"*"){amount, tariff, tax, type, name, rateid}}`;
+    let query = `query MeterTariff {meterTariff(id:["*"]){amount, tariff, tax, type, name, rateid, source}}`;
   	return this.apollo.query({query: gql(query), fetchPolicy: 'no-cache'});
   }
 
   getTariffs() {
-    return this.configService.getConfigurationValue('tariff');
+    let tariffs = [];
+    this.configService.getConfigurationValue('power').forEach(power => {
+      if (power.tariff) {
+        power.tariff.forEach(tariff => {
+          tariff['meter'] = power.meter
+          tariffs.push(tariff);
+        })
+      }
+    })
+    return tariffs;
   }
 }
