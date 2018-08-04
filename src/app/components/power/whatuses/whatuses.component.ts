@@ -15,6 +15,7 @@ export class WhatusesComponent implements OnInit {
   @ViewChild('echart') container: ElementRef;
 
   private transitionendSubscription: Subscription;
+  private resizeSubscription: Subscription;
 
   private configKeys = {
     'load': ['meter']
@@ -71,19 +72,27 @@ export class WhatusesComponent implements OnInit {
 
   ngOnInit() {
     this.transitionendSubscription = this.eventService.onTransitionend$.pipe().subscribe(() => {
-      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0 &&
-          this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
-        this.echartsInstance.resize({
-          width: this.container.nativeElement.offsetWidth,
-          height: this.container.nativeElement.offsetHeight
-        });
-      }
+      this.echartsInstance.resize({
+        width: this.container.nativeElement.offsetWidth,
+        height: this.container.nativeElement.offsetHeight
+      });
+      this.container.nativeElement.firstChild.style.height = '100%';
+    });
+    this.resizeSubscription = this.eventService.onResize$.pipe().subscribe(() => {
+      this.echartsInstance.resize({
+        width: this.container.nativeElement.offsetWidth,
+        height: this.container.nativeElement.offsetHeight
+      });
+      this.container.nativeElement.firstChild.style.height = '100%';
     });
   }
 
   ngOnDestroy() {
     if (this.transitionendSubscription) {
        this.transitionendSubscription.unsubscribe();
+     }
+    if (this.resizeSubscription) {
+       this.resizeSubscription.unsubscribe();
      }
   }
 
@@ -93,6 +102,7 @@ export class WhatusesComponent implements OnInit {
       width: this.container.nativeElement.offsetWidth,
       height: this.container.nativeElement.offsetHeight
     });
+    this.container.nativeElement.firstChild.style.height = '0px';
   }
 
   refresh(meterReadings, power, circuit) {

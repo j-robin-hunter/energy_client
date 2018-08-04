@@ -107,13 +107,11 @@ export class ConsumerComponent implements OnInit {
 
   ngOnInit() {
     this.transitionendSubscription = this.eventService.onTransitionend$.pipe().subscribe(() => {
-      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0 &&
-          this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
-        this.echartsInstance.resize({
-          width: this.container.nativeElement.offsetWidth,
-          height: this.container.nativeElement.offsetHeight
-        });
-      }
+      this.echartsInstance.resize({
+        width: this.container.nativeElement.offsetWidth,
+        height: this.container.nativeElement.offsetHeight
+      });
+      this.container.nativeElement.firstChild.style.height = '100%';
     });
   }
 

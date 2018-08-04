@@ -27,7 +27,7 @@ export class ProviderComponent implements OnInit {
       'wind': ['meter'],
       'load': ['meter']
     });
-    let colors = {'grid': '#c62828', 'solar': '#009688', 'battery': '#0277bd', 'wind': '#546e7a'};
+    let colors = ['#c62828', '#009688', '#0277bd', '#546e7a', '#ffa500', '#ec2e53', '#800080'];
     let legend = [];
     let series = [];
 
@@ -46,19 +46,12 @@ export class ProviderComponent implements OnInit {
         smooth: true,
         showSymbol: false,
         yAxisIndex: yindex,
-        /*
-        areaStyle: {
-            opacity: 0.3
-        },
-        */
-        lineStyle: {
-          color: colors[power[item]['type']]
-        },
         data: []
       });
     });
 
     this.options = {
+      color: colors,
       tooltip: {
           trigger: 'axis',
           axisPointer: {
@@ -118,13 +111,11 @@ export class ProviderComponent implements OnInit {
 
   ngOnInit() {
     this.transitionendSubscription = this.eventService.onTransitionend$.pipe().subscribe(() => {
-      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0 &&
-          this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
-        this.echartsInstance.resize({
-          width: this.container.nativeElement.offsetWidth,
-          height: this.container.nativeElement.offsetHeight
-        });
-      }
+      this.echartsInstance.resize({
+        width: this.container.nativeElement.offsetWidth,
+        height: this.container.nativeElement.offsetHeight
+      });
+      this.container.nativeElement.firstChild.style.height = '100%';
     });
   }
 
@@ -136,10 +127,6 @@ export class ProviderComponent implements OnInit {
 
   onChartInit(chart) {
     this.echartsInstance = chart;
-    this.echartsInstance.resize({
-      width: this.container.nativeElement.offsetWidth,
-      height: this.container.nativeElement.offsetHeight
-    });
   }
 
   refreshData(meterReadings, power) {

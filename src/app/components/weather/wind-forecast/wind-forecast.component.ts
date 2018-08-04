@@ -14,7 +14,6 @@ export class WindForecastComponent implements OnInit {
 
   private transitionendSubscription: Subscription;
   private resizeSubscription: Subscription;
-  private pageshowSubscription: Subscription;
   private onWeatherSubscription: Subscription;
   private windData: any[];
   private dates: any;
@@ -90,31 +89,18 @@ export class WindForecastComponent implements OnInit {
 
   ngOnInit() {
     this.transitionendSubscription = this.eventService.onTransitionend$.pipe().subscribe(() => {
-      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0 &&
-          this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
-        this.echartsInstance.resize({
-          width: this.container.nativeElement.offsetWidth,
-          height: this.container.nativeElement.offsetHeight
-        });
-      }
-    });
-    this.pageshowSubscription = this.eventService.onPageshow$.pipe().subscribe(() => {
-      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0 &&
-          this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
-        this.echartsInstance.resize({
-          width: this.container.nativeElement.offsetWidth,
-          height: this.container.nativeElement.offsetHeight
-        });
-      }
+      this.echartsInstance.resize({
+        width: this.container.nativeElement.offsetWidth,
+        height: this.container.nativeElement.offsetHeight
+      });
+      this.container.nativeElement.firstChild.style.height = '100%';
     });
     this.resizeSubscription = this.eventService.onResize$.pipe().subscribe(() => {
-      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0 &&
-          this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
-        this.echartsInstance.resize({
-          width: this.container.nativeElement.offsetWidth,
-          height: this.container.nativeElement.offsetHeight
-        });
-      }
+      this.echartsInstance.resize({
+        width: this.container.nativeElement.offsetWidth,
+        height: this.container.nativeElement.offsetHeight
+      });
+      this.container.nativeElement.firstChild.style.height = '100%';
     });
     this.onWeatherSubscription = this.weatherService.onWeather$.subscribe(weather => {
       this.updateForecast(weather);
@@ -124,9 +110,6 @@ export class WindForecastComponent implements OnInit {
   ngOnDestroy() {
     if (this.transitionendSubscription) {
        this.transitionendSubscription.unsubscribe();
-     }
-    if (this.pageshowSubscription) {
-       this.pageshowSubscription.unsubscribe();
      }
     if (this.resizeSubscription) {
        this.resizeSubscription.unsubscribe();
@@ -138,10 +121,6 @@ export class WindForecastComponent implements OnInit {
 
   onChartInit(chart) {
     this.echartsInstance = chart;
-    this.echartsInstance.resize({
-      width: this.container.nativeElement.offsetWidth,
-      height: this.container.nativeElement.offsetHeight
-    });
   }
 
   updateForecast(weather: Array<IWeather>) {

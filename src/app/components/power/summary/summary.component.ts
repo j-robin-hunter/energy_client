@@ -14,7 +14,7 @@ export class SummaryComponent implements OnInit {
   @ViewChild('echart') container: ElementRef;
 
   private transitionendSubscription: Subscription;
-  private echartsIntance: any;
+  private echartsInstance: any;
 
   public spinner: boolean = true;
   public currentProvided: number = 0;
@@ -125,11 +125,11 @@ export class SummaryComponent implements OnInit {
 
   ngOnInit() {
     this.transitionendSubscription = this.eventService.onTransitionend$.pipe().subscribe(() => {
-      if (this.container.nativeElement.offsetWidth != 0 && this.container.nativeElement.offsetWidth != 0) {
-        this.echartsIntance.resize({
-          width: this.container.nativeElement.offsetWidth
-        });
-      }
+      this.echartsInstance.resize({
+        width: this.container.nativeElement.offsetWidth,
+        height: this.container.nativeElement.offsetHeight
+      });
+      this.container.nativeElement.firstChild.style.height = '100%';
     });
   }
 
@@ -140,7 +140,7 @@ export class SummaryComponent implements OnInit {
   }
 
   onChartInit(chart) {
-    this.echartsIntance = chart;
+    this.echartsInstance = chart;
   }
 
   refreshData(meterReadings, power) {
