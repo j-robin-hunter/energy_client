@@ -2,44 +2,65 @@
 <app-toast></app-toast>
 -->
 
-<div class="container">
-  <div class="col12">
-    <app-summary-layout></app-summary-layout>
-  </div>
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #snav mode='over'>
+    <mat-nav-list style="padding: 0px; width: 200px;">
+      <div class="sidenav-header"></div>
+      <a mat-list-item routerLink=".">Setup</a>
+    </mat-nav-list>
+  </mat-sidenav>
 
-  <div class="card col9 row1">
-    <div class="forecast">
-      <div>
-        <app-cloud-solar-forecast></app-cloud-solar-forecast>
+  <mat-sidenav-content>
+
+    <div class="container">
+      <mat-toolbar class="toolbar col12" color="primary">
+        <mat-toolbar-row>
+          <button mat-icon-button (click)="snav.toggle()"><mat-icon>menu</mat-icon></button>
+          <app-city class="city"></app-city>
+          <div class="spacer"></div>
+          <app-weather class="weatherone" [when] = 0></app-weather>
+          <app-weather class="weathertwo" [when] = 1></app-weather>
+          <app-weather class="weatherthree" [when] = 2></app-weather>
+          <div class="spacer"></div>
+          <app-clock class="clock"></app-clock>
+        </mat-toolbar-row>
+      </mat-toolbar>
+
+      <div class="card col9 row1">
+        <div class="forecast">
+          <div>
+            <app-cloud-solar-forecast></app-cloud-solar-forecast>
+          </div>
+          <div>
+            <app-wind-forecast></app-wind-forecast>
+          </div>
+        </div>
       </div>
-      <div>
-        <app-wind-forecast></app-wind-forecast>
+
+      <div class="card col3 row1">
+        <app-whatuses></app-whatuses>
+      </div>
+
+      <div class="card col3 row2">
+        <app-summary></app-summary>
+      </div>
+
+      <div class="card col3 row2">
+        <app-cost></app-cost>
+      </div>
+
+      <div class="card col3 row2">
+        <app-saving></app-saving>
+      </div>
+
+      <div class="card col3 row1">
+        <app-provider></app-provider>
+      </div>
+
+      <div class="card col3 row1">
+        <app-consumer></app-consumer>
       </div>
     </div>
-  </div>
 
-  <div class="card col3 row1">
-    <app-whatuses></app-whatuses>
-  </div>
-
-  <div class="card col3 row2">
-    <app-summary></app-summary>
-  </div>
-
-  <div class="card col3 row2">
-      <app-cost></app-cost>
-  </div>
-
-  <div class="card col3 row2">
-      <app-saving></app-saving>
-  </div>
-
-  <div class="card col3 row1">
-    <app-provider></app-provider>
-  </div>
-
-  <div class="card col3 row1">
-    <app-consumer></app-consumer>
-  </div>
-
-</div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

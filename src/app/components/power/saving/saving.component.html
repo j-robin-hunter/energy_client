@@ -18,7 +18,7 @@
       <div class="nosavings">No savings data is available for this period</div>
     </ng-template>
     <ng-template #savingsTemplate>
-      <div class="savingstable" *ngFor="let saving of getSavingsMade()">
+      <div class="savingstable" *ngFor="let saving of savingsMadeArray">
         <div class="savingname">{{saving.name}}</div>
         <div class="savingtext">{{saving.text}}</div>
         <div class="savingamount">{{saving.saving | currency:currency:'symbol':'1.2-2':locale}}</div>

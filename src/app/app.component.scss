@@ -1,9 +1,24 @@
+.mat-toolbar-row {
+  height: 110px;
+}
+
+.mat-drawer-content {
+  height: 100vh;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.sidenav-header {
+   height: 110px;
+}
+
 .container {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  width: 100vw;
-  height: 100vh;
   grid-auto-rows: minmax(100px, auto);
+  height: 100vh;
 }
 
 .card {

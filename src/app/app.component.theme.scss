@@ -11,4 +11,20 @@
     background-color: mat-color($primary);
     color: mat-color($primary, 100);
   }
+
+  .weatherone {
+    color: mat-color($accent, 300);
+  }
+  .weathertwo {
+    color: mat-color($accent, 400);
+  }
+
+  .weatherthree {
+      color: mat-color($accent, 500);
+  }
+
+
+  .sidenav-header {
+    background-color: mat-color($primary);
+  }
 }

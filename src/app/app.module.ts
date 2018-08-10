@@ -13,6 +13,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatListModule } from '@angular/material/list';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatDividerModule } from '@angular/material/divider';
 
 import { ApolloModule } from 'apollo-angular';
 import { HttpLinkModule } from 'apollo-angular-link-http'
@@ -40,7 +44,6 @@ import { CityComponent } from './components/city/city.component';
 import { WhatusesComponent } from './components/power/whatuses/whatuses.component';
 import { ToastComponent } from './components/toast/toast.component';
 import { CostComponent } from './components/power/cost/cost.component';
-import { SummaryLayoutComponent } from './layouts/summary-layout/summary-layout.component';
 import { SocPipe } from './pipes/soc.pipe';
 import { SavingComponent } from './components/power/saving/saving.component';
 
@@ -64,7 +67,6 @@ export function configServiceFactory(configService: ConfigService):
     WhatusesComponent,
     ToastComponent,
     CostComponent,
-    SummaryLayoutComponent,
     SocPipe,
     SavingComponent
   ],
@@ -81,7 +83,11 @@ export function configServiceFactory(configService: ConfigService):
     MatButtonModule,
     MatCardModule,
     MatProgressSpinnerModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatSidenavModule,
+    MatListModule,
+    MatToolbarModule,
+    MatDividerModule
   ],
   providers: [
     WeatherService,

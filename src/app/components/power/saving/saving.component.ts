@@ -34,7 +34,7 @@ export class SavingComponent implements OnInit {
   private endDate;
   private displayPeriod;
   private currentTariffs = [];
-  private compareTariffs = [{'start': 0, 'amount': 0.157}];
+  private compareTariffs = [];
   private savingsMade: any = {};
   private power;
 
@@ -45,6 +45,7 @@ export class SavingComponent implements OnInit {
   public selectedTab: number = 0;
   public currency = 'GBP';
   public locale = 'en-GB';
+  public savingsMadeArray = [];
   public updateOptions: any;
   public options = {
     grid: {
@@ -102,9 +103,18 @@ export class SavingComponent implements OnInit {
           });
         }
       })
+      if (grid['compare']) {
+        grid.compare.rate.forEach(rate => {
+            this.compareTariffs.push({'amount': rate.amount, 'start': rate.start.split(':').reduce((acc, time) => (60 * acc) + +time)});
+        });
+      }
     });
     this.currentTariffs.sort((a, b) => b.start - a.start);
-    this.compareTariffs.sort((a, b) => b.start - a.start);
+    if (this.compareTariffs.length == 0) {
+      this.compareTariffs = this.currentTariffs.map(obj => ({...obj}));
+    } else {
+      this.compareTariffs.sort((a, b) => b.start - a.start);
+    }
 
     this.setInitialDates();
 
@@ -127,7 +137,11 @@ export class SavingComponent implements OnInit {
     let legend = [];
     Object.keys(this.power).forEach(item => {
       if (this.power[item].type != 'load') {
-        this.savingsMade[this.power[item].type] = {'name': item, 'saving': 0, 'text': savingText[this.power[item].type]};
+        this.savingsMade[this.power[item].type] = {
+          'name': item,
+          'type': this.power[item].type,
+          'saving': 0,
+          'text': savingText[this.power[item].type]};
         legend.push({'name': item, 'icon': 'circle'});
         this.series.push({
           'type': 'bar',
@@ -296,6 +310,15 @@ export class SavingComponent implements OnInit {
       });
       this.updateSavingsFor();
       this.saving = accrurredSaving;
+
+      this.savingsMadeArray = [];
+      Object.keys(this.savingsMade).sort().forEach(entry => {
+        this.savingsMadeArray.push({
+          'name': this.savingsMade[entry].name,
+          'type':  this.savingsMade[entry].type,
+          'saving': this.savingsMade[entry].saving,
+          'text': this.savingsMade[entry].text});
+      });
       this.updateOptions = {
         xAxis: {
           min: this.startDate.valueOf() - 900000,
@@ -325,13 +348,5 @@ export class SavingComponent implements OnInit {
         this.savingsFor = this.displayPeriod.toLowerCase() + ' from ' + this.startDate.format('Do MMM YYYY');
       }
     }
-  }
-
-  getSavingsMade() {
-    let savingsMadeArray = [];
-    Object.keys(this.savingsMade).sort().forEach(entry => {
-      savingsMadeArray.push({'name': this.savingsMade[entry].name, 'saving': this.savingsMade[entry].saving, 'text': this.savingsMade[entry].text});
-    });
-    return savingsMadeArray;
   }
 }
